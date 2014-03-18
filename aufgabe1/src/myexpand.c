@@ -6,6 +6,7 @@
 
 /* === INCLUDES === */
 #include <stdio.h>
+#include <stdlib.h>
 
 /* === CONST === */
 

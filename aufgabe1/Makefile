@@ -1,14 +1,21 @@
+CC=gcc
+DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE
+CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
+DIR=src/
+OBJECTFILES=$(DIR)myexpand.o
+
+.PHONY: all clean
+
 all: myexpand 
 
-myexpand: myexpand.o
-	gcc -o $@ $^	
+myexpand: $(OBJECTFILES) 
+	$(CC) $(LDFLAGS) -o $@ $^	
 
 %.o: %.c
-	gcc -std=c99 -pedantic -Wall -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -c -o $@ $^
+	$(CC) $(LDFLAGS) -c -o $@ $<
 
 clean:
-	rm -f myexpand 
-	rm -f myexpand.o
+	rm -f $(OBJECTFILES) myexpand 
 
 tt:
 	./tests/test.sh

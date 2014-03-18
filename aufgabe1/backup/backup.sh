@@ -2,9 +2,9 @@
 
 # Backup of a folder
 # The files to backup
-backup_files="../src"
+backup_files="./src"
 # The destination folder of the backup
-dest="./"
+dest="./backup"
 # The Timestamp to make the backup unique^
 day=$(date +%s)
 
