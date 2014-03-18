@@ -1,6 +1,12 @@
+###############################################################
+#@file Makefile
+#@author David Pfahler (1126287) <e1126287@student.tuwien.ac.at>
+#@brief This file is used to compile the project
+###############################################################
+
 CC=gcc
-DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE
-CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
+DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -g
+CFLAGS=-Wall -std=c99 -pedantic $(DEFS)
 DIR=src/
 OBJECTFILES=$(DIR)myexpand.o
 
