@@ -8,12 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h> /* for INT_MIN, INT_MAX */
+#include <unistd.h> /* for access() */
+
+/* === MACTROS === */
+#define NRELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
 /* === CONST === */
-char* pgm_name;
+static char* pgm_name;
+static const char usage[] = "SYNOPSIS:\n\tmyexpand [-t tabstop] [file...]";
 
 /* === PROTOTYPES === */
-char **parseInput(int argc, char **argv, unsigned int *tabstop);
+int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile);
 
 /**
  * The main entry point of the program.
@@ -24,54 +29,99 @@ char **parseInput(int argc, char **argv, unsigned int *tabstop);
  */
 int main(int argc, char **argv)
 {
+    unsigned int tabstop = 8;
+    static const char usage[] = "SYNOPSIS:\n\tmyexpand [-t tabstop] [file...]";
+    int firstFile = 1;
+	
+	//Check if the program exists
     if(argc > 0){
         pgm_name = argv[0];
     } else{
         (void) fprintf(stderr, "Fatal error. There is no program name Cannot continue.\n");
         exit(EXIT_FAILURE);
     }
-    unsigned int tabstop = 8;
-    char** files = parseInput(argc,argv,&tabstop);
-    if(!files){
-        exit(EXIT_FAILURE);    
-    }
-    printf("Tabstop = %d!\n",tabstop);
-    return 0;
-}
-
-/**
- * @brief Parses the command line inputs
- * @detail if the -t flag is set the variable tabstop gets changed.
- * @param argc The number of command-line parameters in argv.
- * @param argv The array of command-line parameters, argc elements long.
- * @param tabstop The number of spaces to replace one tab
- * @return Pointer to an array of files
- */
-char **parseInput(int argc, char **argv, unsigned int *tabstop){
-    char* usage = "SYNOPSIS:\n\tmyexpand [-t tabstop] [file...]";
-    int firstFile = 1;
     //Check if there are too less arguments
     if (argc < 2){
         (void) fprintf(stderr, "%s: Too less arguments.\n%s\n", pgm_name, usage);
-        return NULL; 
+        exit(EXIT_FAILURE);
     }
-    printf("%s\n",strcmp(argv[1],"-t"));
     //Check if the -t flag is set
-    if (strcmp(argv[1],"-t") == 0){
-        long buff = strtol(argv[2],NULL,10);
-        if (buff >= INT_MIN && buff <= INT_MAX) {
-            *tabstop = buff;
-            firstFile = 3;
-            (void) printf("%d\n",buff);
-        }
-        else {
-            (void) fprintf(stderr, "%s: The tabstop was too big.\n", pgm_name);
-            return NULL;
-        }
-    }
-    else{
-        (void) printf("%s\n",argv[1]);
-    }
-	return argv+firstFile;
+    if (argv[1][0] == '-'){
+		//We found a flag! Check if it is t
+		if(argv[1][1] == 't'){
+			long buff = strtol(argv[2],NULL,10);
+			if (buff >= 0 && buff <= INT_MAX) {
+				tabstop = buff;
+				firstFile = 3;
+			}
+			else {
+				(void) fprintf(stderr, "%s: The tabstop was too big.\n", pgm_name);
+				exit(EXIT_FAILURE);
+			}
+		}
+		//This was not the t flag
+		else{
+			(void) fprintf(stderr, "%s: The flag %c is unknown!\n%s\n", pgm_name,argv[1][1],usage);
+			exit(EXIT_FAILURE);
+		}
+	}
 
+	//Now check if all files exist
+	
+	for(int i = 0; i < argc - firstFile;++i)
+	{
+		if( access( argv[firstFile+i], W_OK  ) != -1 ) {
+			// file exists
+		} else {
+		    // file doesn't exist
+			(void) fprintf(stderr, "%s: The file %s does not exist or you don't have write permissions!\n%s\n", pgm_name,argv[firstFile+i],usage);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+    return EXIT_SUCCESS;
 }
+
+int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile){
+	
+    //Check if there are too less arguments
+    if (argc < 2){
+        (void) fprintf(stderr, "%s: Too less arguments.\n%s\n", pgm_name, usage);
+        exit(EXIT_FAILURE);
+    }
+    //Check if the -t flag is set
+    if (argv[1][0] == '-'){
+		//We found a flag! Check if it is t
+		if(argv[1][1] == 't'){
+			long buff = strtol(argv[2],NULL,10);
+			if (buff >= 0 && buff <= INT_MAX) {
+				*tabstop = buff;
+				*firstFile = 3;
+			}
+			else {
+				(void) fprintf(stderr, "%s: The tabstop was too big.\n", pgm_name);
+				exit(EXIT_FAILURE);
+			}
+		}
+		//This was not the t flag
+		else{
+			(void) fprintf(stderr, "%s: The flag %c is unknown!\n%s\n", pgm_name,argv[1][1],usage);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	//Now check if all files exist
+	
+	for(int i = 0; i < argc - *firstFile;++i)
+	{
+		if( access( argv[*firstFile+i], W_OK  ) != -1 ) {
+			// file exists
+		} else {
+		    // file doesn't exist
+			(void) fprintf(stderr, "%s: The file %s does not exist or you don't have write permissions!\n%s\n", pgm_name,argv[*firstFile+i],usage);
+			exit(EXIT_FAILURE);
+		}
+	}
+	return 0;
+}
+

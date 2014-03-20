@@ -7,6 +7,7 @@
 CC=gcc
 DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -g
 CFLAGS=-Wall -std=c99 -pedantic $(DEFS)
+LDFLAGS=
 DIR=src/
 OBJECTFILES=$(DIR)myexpand.o
 
@@ -18,7 +19,7 @@ myexpand: $(OBJECTFILES)
 	$(CC) $(LDFLAGS) -o $@ $^	
 
 %.o: %.c
-	$(CC) $(LDFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTFILES) myexpand 
