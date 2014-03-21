@@ -19,7 +19,7 @@ static const char usage[] = "SYNOPSIS:\n\tmyexpand [-t tabstop] [file...]";
 
 /* === PROTOTYPES === */
 int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile);
-int replaceTabsOfFile(const char* filename,const int tabstop);
+int replaceTabsOfFile(FILE* fp,const int tabstop);
 
 /**
  * The main entry point of the program.
@@ -45,13 +45,32 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
 	}
 
+	//If no filename is given read from stdin
+	if((firstFile == 3 && argc < 4)  || (firstFile == 1 && argc < 2)){
+		//read from stdin
+		replaceTabsOfFile(stdin,tabstop);
+	}
+
 	//open each file and replace all tabs with tabstop spaces
-	
 	for(int i = 0; i < argc - firstFile;++i){
-		if(replaceTabsOfFile(argv[firstFile+i],tabstop) != 0){
-			(void) fprintf(stderr, "Fatal error. There was an error while writing to the file '%s'. Cannot continue.",argv[firstFile+i]);
+		char *filename = argv[firstFile+i];
+		FILE *fp;
+		if((fp = fopen(filename, "r+")) == 0){
+			(void) fprintf(stderr, "%s: The file %s does not exist or you don't have read permissions!\n", pgm_name,filename);
+			exit(EXIT_FAILURE);
+		} 
+
+		if(replaceTabsOfFile(fp,tabstop) != 0){
+			(void) fprintf(stderr, "Fatal error. There was an error while writing to the file '%s'. Cannot continue.",filename);
 			exit(EXIT_FAILURE);
 		}
+
+		if(fclose(fp) == EOF){
+			(void) fprintf(stderr, "%s: Error closing the file '%s'!\n", pgm_name,filename);
+			exit(EXIT_FAILURE);
+		}
+
+
 	}
 
     return EXIT_SUCCESS;
@@ -69,12 +88,9 @@ int main(int argc, char **argv)
  * @return 0 on success, non-zero on failure.
  */
 int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile){
-	
-    //Check if there are too less arguments
-    if (argc < 2){
-        (void) fprintf(stderr, "%s: Too less arguments.\n%s\n", pgm_name, usage);
-        exit(EXIT_FAILURE);
-    }
+
+	if ( argc < 2 )
+		return 0; /*Read from stdin*/
     //Check if the -t flag is set
     if (argv[1][0] == '-'){
 		//We found a flag! Check if it is t
@@ -89,15 +105,14 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
 			if (buff >= 0 && buff <= INT_MAX) {
 				*tabstop = buff;
 				*firstFile = 3;
+
+				if(argc < 4)
+					return 0; /* Read from stdin */
 			}
 		}
 		//This was not the t flag
 		else{
 			(void) fprintf(stderr, "%s: The flag %c is unknown!\n%s\n", pgm_name,argv[1][1],usage);
-			exit(EXIT_FAILURE);
-		}
-		if(argc < 3){
-			(void) fprintf(stderr, "%s: Too less arguments.\n%s\n", pgm_name, usage);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -106,11 +121,11 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
 	
 	for(int i = 0; i < argc - *firstFile;++i)
 	{
-		if( access( argv[*firstFile+i], W_OK  ) != -1 ) {
+		if( access( argv[*firstFile+i], R_OK  ) != -1 ) {
 			// file exists
 		} else {
 		    // file doesn't exist
-			(void) fprintf(stderr, "%s: The file %s does not exist or you don't have write permissions!\n%s\n", pgm_name,argv[*firstFile+i],usage);
+			(void) fprintf(stderr, "%s: The file %s does not exist or you don't have read permissions!\n%s\n", pgm_name,argv[*firstFile+i],usage);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -118,28 +133,33 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
 }
 
 
-int replaceTabsOfFile(const char* filename,const int tabstop){
-	int nChar;
-	FILE *file_open;
+/**
+ * Replaces all tabs of the given file with tabstop spaces and prints it onto the standard output
+ * @brief Replaces all tabs of the given file with tabstop spaces
+ * @detail opens the file and iterates over every character to check if it is the tab character '\t' and replaces it with number of tabstop spaces. Prints the file to the standard output 
+ * @param fp The pointer of the file which tabs are getting replaced, could also be stdin!
+ * @param tabstop the number of spaces a tab gets replaced
+ * @return 0 if everything worked out well, otherwise it prints an error message and returns -1
+ */
+int replaceTabsOfFile(FILE *fp,const int tabstop){
+	char nChar;
 	char tabs[tabstop];
+//	char *content;
+
 	//fill array tabs with spaces
 	for(int i = 0; i < tabstop; ++i){
-		tabs[i] = ' ';
+		tabs[i] = '#';
 	}
 
-	if((file_open = fopen(filename, "r+")) == 0){
-		(void) fprintf(stderr, "%s: The file %s does not exist or you don't have write permissions!\n", pgm_name,filename);
-		return -1;
-	} 
-	// else it worked:
-	printf("File: %s opened\n",filename);
-	
-	while((nChar = fgetc(file_open)) != EOF){
+	while((nChar = fgetc(fp)) != EOF){
 		if(nChar == '\t'){
-			fwrite(tabs, sizeof(tabs[0]),NRELEMENTS(tabs),file_open);	
+			//Write to stdout
+			fwrite(tabs, sizeof(char),NRELEMENTS(tabs),stdout);	
+		}
+		else{
+			fputc(nChar,stdout);
 		}
 	}
 
-	fclose(file_open);
 	return 0;
 }
