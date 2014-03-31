@@ -96,7 +96,7 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
 		//We found a flag! Check if it is t
 		if(argv[1][1] == 't'){
 			//Check if there are filenames after the flag
-			if(argc < 4){
+			if(argc < 3){
 				(void) fprintf(stderr, "%s: Too less arguments.\n%s\n", pgm_name, usage);
 				exit(EXIT_FAILURE);
 			}
@@ -136,7 +136,7 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
 /**
  * Replaces all tabs of the given file with tabstop spaces and prints it onto the standard output
  * @brief Replaces all tabs of the given file with tabstop spaces
- * @detail opens the file and iterates over every character to check if it is the tab character '\t' and replaces it with number of tabstop spaces. Prints the file to the standard output 
+ * @detail iterates over every character of the stream to check if it is the tab character '\t' and replaces it with number of tabstop spaces. Prints the file to the standard output. The file pointer doesn't get closed! 
  * @param fp The pointer of the file which tabs are getting replaced, could also be stdin!
  * @param tabstop the number of spaces a tab gets replaced
  * @return 0 if everything worked out well, otherwise it prints an error message and returns -1
