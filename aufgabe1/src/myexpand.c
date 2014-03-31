@@ -9,13 +9,14 @@
 #include <stdlib.h>
 #include <limits.h> /* for INT_MIN, INT_MAX */
 #include <unistd.h> /* for access() */
+#include <assert.h>
 
 /* === MACTROS === */
 #define NRELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
 /* === CONST === */
 static char* pgm_name;
-static const char usage[] = "SYNOPSIS:\n\tmyexpand [-t tabstop] [file...]";
+static const char usage[] = "USAGE:\n\tmyexpand [-t tabstop] [file...]";
 
 /* === PROTOTYPES === */
 int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile);
@@ -88,33 +89,36 @@ int main(int argc, char **argv)
  * @return 0 on success, non-zero on failure.
  */
 int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile){
+	int c; // option flag
+	int opt_t; // counter for the t flag
 
 	if ( argc < 2 )
 		return 0; /*Read from stdin*/
-    //Check if the -t flag is set
-    if (argv[1][0] == '-'){
-		//We found a flag! Check if it is t
-		if(argv[1][1] == 't'){
-			//Check if there are filenames after the flag
-			if(argc < 3){
-				(void) fprintf(stderr, "%s: Too less arguments.\n%s\n", pgm_name, usage);
+	while( (c = getopt(argc, argv, "t:")) != -1 ){
+		switch( c ){
+			case 't':
+				opt_t++;
+				long buff = strtol(optarg,NULL,10);
+				if (buff >= 0 && buff <= INT_MAX) {
+					*tabstop = buff;
+					*firstFile = 3;
+
+					if(argc < 4)
+						return 0; /* Read from stdin */
+				}
+			break;
+			case '?': /* ungueltiges Argument */
+				(void) fprintf(stderr, "%s: This flag is unknown!\n%s\n", pgm_name,usage);
 				exit(EXIT_FAILURE);
-			}
-
-			long buff = strtol(argv[2],NULL,10);
-			if (buff >= 0 && buff <= INT_MAX) {
-				*tabstop = buff;
-				*firstFile = 3;
-
-				if(argc < 4)
-					return 0; /* Read from stdin */
-			}
+				
+			break;
+			default: /* unmoeglich */
+				assert( 0 );
 		}
-		//This was not the t flag
-		else{
-			(void) fprintf(stderr, "%s: The flag %c is unknown!\n%s\n", pgm_name,argv[1][1],usage);
-			exit(EXIT_FAILURE);
-		}
+	}
+	if ( opt_t > 1) {
+		(void) fprintf(stderr, "%s: %s\n", pgm_name,usage); 
+		exit(EXIT_FAILURE); 
 	}
 
 	//Now check if all files exist
@@ -148,7 +152,7 @@ int replaceTabsOfFile(FILE *fp,const int tabstop){
 
 	//fill array tabs with spaces
 	for(int i = 0; i < tabstop; ++i){
-		tabs[i] = '#';
+		tabs[i] = ' ';
 	}
 
 	while((nChar = fgetc(fp)) != EOF){
