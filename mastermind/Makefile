@@ -5,25 +5,30 @@
 ###############################################################
 
 CC=gcc
-DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -g
-CFLAGS=-Wall -std=c99 -pedantic $(DEFS)
+DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -DENDEBUG
+CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
 LDFLAGS=
 DIR=src/
-OBJECTFILES=$(DIR)server.o $(DIR)client.o
+SERVER_OBJFILES=$(DIR)server.o
+CLIENT_OBJFILES=$(DIR)client.o 
+#$(DIR)gamelogic.o
+OBJFILES=$(SERVER_OBJFILES) $(CLIENT_OBJFILES)
 
 .PHONY: all clean
 
 all: client server 
 
-server: $(OBJECTFILES) 
+server: $(SERVER_OBJFILES) 
 	$(CC) $(LDFLAGS) -o $@ $^	
 
-client: $(OBJECTFILES) 
+client: $(CLIENT_OBJFILES) 
 	$(CC) $(LDFLAGS) -o $@ $^	
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTFILES) client server 
+	rm -f $(OBJFILES)
+	rm -f client
+	rm -f server 
 

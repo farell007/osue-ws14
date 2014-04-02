@@ -10,6 +10,7 @@
 #include <limits.h> /* for INT_MIN, INT_MAX */
 #include <unistd.h> /* for access() */
 #include <assert.h>
+#include <errno.h>
 
 /* === MACTROS === */
 #define NRELEMENTS(a) (sizeof(a) / sizeof(a[0]))
@@ -19,8 +20,8 @@ static char* pgm_name;
 static const char usage[] = "USAGE:\n\tmyexpand [-t tabstop] [file...]";
 
 /* === PROTOTYPES === */
-int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile);
-int replaceTabsOfFile(FILE* fp,const int tabstop);
+static int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile);
+static int replaceTabsOfFile(FILE* fp,const int tabstop);
 
 /**
  * The main entry point of the program.
@@ -88,9 +89,11 @@ int main(int argc, char **argv)
  * @param firstFile Address to the position of the first filename in the argv array 
  * @return 0 on success, non-zero on failure.
  */
-int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile){
+static int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *firstFile){
 	int c; // option flag
 	int opt_t; // counter for the t flag
+	char *endptr;
+	long buff;
 
 	if ( argc < 2 )
 		return 0; /*Read from stdin*/
@@ -98,14 +101,28 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
 		switch( c ){
 			case 't':
 				opt_t++;
-				long buff = strtol(optarg,NULL,10);
-				if (buff >= 0 && buff <= INT_MAX) {
+				errno = 0;
+				buff = strtol(optarg,&endptr,10);
+				
+				if((errno == ERANGE && (buff == LONG_MAX || buff == LONG_MIN)) || (errno != 0 && buff == 0)){
+					(void) fprintf(stderr, "Parsing of 'tabstop' failed!\n");
+					exit(EXIT_FAILURE);
+				}
+				if(endptr == optarg){
+					(void) fprintf(stderr, "Parsing of 'tabstop' failed! No digits were found\n");
+					exit(EXIT_FAILURE);
+				}
+				if(*endptr != '\0'){
+					(void) fprintf(stderr, "Parsing of 'tabstop' failed! Further characters after [-t]: %s\n",endptr);
+					exit(EXIT_FAILURE);
+					
+				}
 					*tabstop = buff;
 					*firstFile = 3;
 
 					if(argc < 4)
 						return 0; /* Read from stdin */
-				}
+				
 			break;
 			case '?': /* ungueltiges Argument */
 				(void) fprintf(stderr, "%s: This flag is unknown!\n%s\n", pgm_name,usage);
@@ -145,10 +162,11 @@ int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int *first
  * @param tabstop the number of spaces a tab gets replaced
  * @return 0 if everything worked out well, otherwise it prints an error message and returns -1
  */
-int replaceTabsOfFile(FILE *fp,const int tabstop){
+static int replaceTabsOfFile(FILE *fp,const int tabstop){
 	char nChar;
 	char tabs[tabstop];
-//	char *content;
+	int p = 0;
+	int x = 0;
 
 	//fill array tabs with spaces
 	for(int i = 0; i < tabstop; ++i){
@@ -158,10 +176,16 @@ int replaceTabsOfFile(FILE *fp,const int tabstop){
 	while((nChar = fgetc(fp)) != EOF){
 		if(nChar == '\t'){
 			//Write to stdout
-			fwrite(tabs, sizeof(char),NRELEMENTS(tabs),stdout);	
+			p = tabstop * ((x / tabstop)+1);
+			(void) fwrite(tabs, sizeof(char),p-x,stdout);
+			x = p;
 		}
 		else{
-			fputc(nChar,stdout);
+			x++;
+			if(nChar == '\n'){
+				x = 0;
+			}
+			(void) fputc(nChar,stdout);
 		}
 	}
 

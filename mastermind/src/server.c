@@ -28,7 +28,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <limits.h>
-
+#include <arpa/inet.h>
 
 /* === Constants === */
 
@@ -80,7 +80,7 @@ volatile sig_atomic_t terminating = 0;
 
 struct opts {
     long int portno;
-    uint8_t secret[SLOTS];
+	uint8_t secret[SLOTS];
 };
 
 
@@ -138,6 +138,7 @@ static void free_resources(void);
 
 static uint8_t *read_from_client(int fd, uint8_t *buffer, size_t n)
 {
+	DEBUG("Start reading from client\n");
     /* loop, as packet can arrive in several partial reads */
     size_t bytes_recv = 0;
     do {
@@ -268,10 +269,13 @@ int main(int argc, char *argv[])
 {
 
     struct opts options;
+	struct sockaddr_in ai;
+	struct sockaddr_in client_addr;
+	socklen_t client_addr_len;
     sigset_t blocked_signals;
     int round;
     int ret;
-    
+    int optval = 1;
     parse_args(argc, argv, &options);
 
     /* setup signal handlers */
@@ -296,8 +300,44 @@ int main(int argc, char *argv[])
        listen, and wait for new connections, which should be assigned to
        `connfd`. Terminate the program in case of an error.
     */
-    #error "insert your code here"
 
+	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(sockfd < 0){
+		(void) bail_out(EXIT_FAILURE,"error opening socket");
+	}
+	
+	DEBUG("socket retrieve success\n");
+
+	ai.sin_family = AF_INET;
+	ai.sin_port =htons(options.portno);
+	ai.sin_addr.s_addr = INADDR_ANY;
+	bzero(&ai.sin_zero, sizeof(ai.sin_zero));
+
+
+	optval = 1;
+	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0){
+		(void) bail_out(EXIT_FAILURE,"error setting the server to SO_REUSEADDR");
+	}
+
+	if(bind(sockfd, (struct sockaddr*)&ai,sizeof(ai)) < 0){ 
+		(void) bail_out(EXIT_FAILURE,"error binding socket");
+	}
+
+	DEBUG("socket binding success\n");
+
+	/* listen for incoming connections, set socket to passive */
+	if(listen(sockfd, BACKLOG) < 0)
+	{
+		(void) close(sockfd);
+	    (void) bail_out(EXIT_FAILURE,"Could not set socket to passive\n");
+	}
+
+	connfd = accept(sockfd, (struct sockaddr*) &client_addr, &client_addr_len);
+	char str[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET,&(client_addr.sin_addr),str,INET_ADDRSTRLEN);
+	
+	DEBUG("Accepted connection to client. Host: %s\n",str);
+	
     /* accepted the connection */
     ret = EXIT_SUCCESS;
     for (round = 1; round <= MAX_TRIES; ++round) {
@@ -322,7 +362,19 @@ int main(int argc, char *argv[])
         DEBUG("Sending byte 0x%x\n", buffer[0]);
 
         /* send message to client */
-        #error "insert your code here"
+		size_t bytes_sent = 0;
+		do {
+			ssize_t r;
+			r = write(connfd, buffer + bytes_sent, BUFFER_BYTES - bytes_sent);
+			if (r <= 0) {
+				bail_out(EXIT_FAILURE,"write to client failed");
+			}
+			bytes_sent += r;
+		} while (bytes_sent < BUFFER_BYTES);
+
+		if (bytes_sent > BUFFER_BYTES) {
+			bail_out(EXIT_FAILURE,"write to client failed");
+		}
 
         /* We sent the answer to the client; now stop the game
            if its over, or an error occured */

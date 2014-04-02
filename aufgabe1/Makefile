@@ -5,8 +5,8 @@
 ###############################################################
 
 CC=gcc
-DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -g
-CFLAGS=-Wall -std=c99 -pedantic $(DEFS)
+DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE 
+CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
 LDFLAGS=
 DIR=src/
 OBJECTFILES=$(DIR)myexpand.o
