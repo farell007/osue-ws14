@@ -365,14 +365,14 @@ int main(int argc, char *argv[])
 		size_t bytes_sent = 0;
 		do {
 			ssize_t r;
-			r = write(connfd, buffer + bytes_sent, BUFFER_BYTES - bytes_sent);
+			r = write(connfd, buffer + bytes_sent, WRITE_BYTES - bytes_sent);
 			if (r <= 0) {
 				bail_out(EXIT_FAILURE,"write to client failed");
 			}
 			bytes_sent += r;
-		} while (bytes_sent < BUFFER_BYTES);
+		} while (bytes_sent < WRITE_BYTES);
 
-		if (bytes_sent > BUFFER_BYTES) {
+		if (bytes_sent > WRITE_BYTES) {
 			bail_out(EXIT_FAILURE,"write to client failed");
 		}
 

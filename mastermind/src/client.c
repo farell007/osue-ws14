@@ -39,6 +39,7 @@
 #define EXIT_GAME_LOST (3)
 #define EXIT_MULTIPLE_ERRORS (4)
 
+#define POSSIBILITIES (32767)
  
 /* === Macros === */
 
@@ -51,6 +52,20 @@
 /* Length of an array */
 #define COUNT_OF(x) (sizeof(x)/sizeof(x[0]))
 
+/* === Type Definitions === */
+
+struct opts {
+    const char *server_port;
+	const char *server_hostname;
+};
+
+typedef struct node{
+	uint16_t val;
+	struct node * next;
+} node_t;
+
+enum color {beige = 0, darkblue, green, orange, red, black, violet, white};
+
 /* === Global Variables === */
 
 /* Name of the program */
@@ -62,17 +77,14 @@ static const char *usage = "SYNOPSIS\n\tclient <server-hostname> <server-port>\n
 /* File descriptor for connection socket */
 static int connfd = -1;
 
+/* linked list of possibilities */
+static node_t *possibilities = NULL;
+
+/* number of elements in possibilities*/
+static uint16_t s_possibilities = POSSIBILITIES;
+
 /* This variable is set to ensure cleanup is performed only once */
 volatile sig_atomic_t terminating = 0;
-
-/* === Type Definitions === */
-
-struct opts {
-    const char *server_port;
-	const char *server_hostname;
-};
-
-enum color {beige = 0, darkblue, green, orange, red, black, violet, white};
 
 /* === Prototypes === */
 
@@ -109,24 +121,46 @@ static void signal_handler(int sig);
 static void free_resources(void);
 
 /**
- * @brief generate the next tip
- * @return the two bytes for the server
+ * @brief compute all possibilities of solutions for mastermind
  */
-static uint16_t get_tipp(void);
+static void compute_possibilities( void );
 
 /**
- * @brief sets a pin for the tipp at a position
- * @param pos the position of the pin (0-4)
- * @param c the color to set
- * @param tipp the pointer to the tipp to get changed
+ * @brief Compute answer to request
+ * @param req Client's guess
+ * @param resp Buffer that will be sent to the client
+ * @param secret The last used secret
+ * @return Number of correct matches on success; -1 in case of a parity error
  */
-static void set_pin(int pos, enum color c, uint16_t *tipp);
+static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret);
+
+/**
+ * @brief generate the next tip
+ * @param resp the last response from the server. if 0 make a random guess
+ * @param last_guess the last guess that was sent to the server
+ * @return the two bytes for the server
+ */
+static uint16_t get_tipp( uint8_t resp, uint16_t last_guess);
+
 /**
  * @brief set the parity bit 
  * @param the 2 bytes that want to get sent to the server
+ * @return the tipp with the set parity bit
  */
-static void set_parity_bit(uint16_t *tipp);
+static uint16_t set_parity_bit(uint16_t tipp);
 
+/**
+ * @brief removes all possibilities that receive a worse result than the last resp.
+ * @param resp the last response from the server from the "last_guess"
+ * @param last_guess the last guess that was sent to the server 
+ */
+static void remove_worse_answers(uint8_t resp, uint16_t last_guess);
+
+/**
+ * @brief get a random possibility from the remaining possibilities
+ * @return a possible solution
+ */
+static uint16_t get_random_answer( void ); 
 /* === Implementations === */
 
 static void bail_out(int eval, const char *fmt, ...)
@@ -148,6 +182,16 @@ static void bail_out(int eval, const char *fmt, ...)
     exit(eval);
 }
 
+void free_list (node_t *head){
+	node_t *tmp;
+
+	while(head != NULL){
+		tmp = head;
+		head = head->next;
+		free(tmp);
+	}
+}
+
 static void free_resources(void)
 {
     sigset_t blocked_signals;
@@ -165,7 +209,10 @@ static void free_resources(void)
     if(connfd >= 0) {
         (void) close(connfd);
     }
+	free_list(possibilities);
+	
 }
+
 
 static void signal_handler(int sig)
 {
@@ -257,39 +304,165 @@ static int create_connection(struct opts *options)
 		(void) bail_out(EXIT_FAILURE, "Connection failed.");
 		
 	}
-	DEBUG("Connected to the Server!");
+	DEBUG("Connected to the Server!\n");
 	freeaddrinfo(ai);
 
 	return sockfd;
 }
 
-
-static uint16_t get_tipp(void){
-	uint16_t tipp = 0x0000;
+static void compute_possibilities(){
 	
-	(void) set_pin(0,red,&tipp);
-	(void) set_pin(1,red,&tipp);
-	(void) set_pin(2,red,&tipp);
-	(void) set_pin(3,red,&tipp);
-	(void) set_pin(4,red,&tipp);
-	
-	(void) set_parity_bit(&tipp);
-
-	return tipp; 
+	possibilities = malloc(sizeof(node_t));
+	node_t * curr = possibilities;
+	uint16_t x = 0;
+	while(x < s_possibilities + 1){
+		curr->val = x++;
+		if(x < s_possibilities + 1){
+			curr->next = malloc(sizeof(node_t));
+			curr = curr->next;
+		} else{
+			curr->next = NULL;
+		}
+	}
 }
 
-static void set_pin(int pos, enum color c, uint16_t *tipp){	
+void print_list(node_t *head){
+	node_t * current = head;
+
+	while(current != NULL){
+		printf("%d\n",current->val);
+		current = current->next;
+	}
+}
+
+static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)
+{
+	int colors_left[COLORS];
+	int guess[COLORS];
+	int red, white;
+	int j;
+	/* extract the guess and calculate parity */
+	for (j = 0; j < SLOTS; ++j) {
+		int tmp = req & 0x7;
+		guess[j] = tmp;
+		req >>= SHIFT_WIDTH;
+	}
+	/* marking red and white */
+	(void) memset(&colors_left[0], 0, sizeof(colors_left));
+	red = white = 0;
+	for (j = 0; j < SLOTS; ++j) {
+		/* mark red */
+		if (guess[j] == secret[j]) {
+			red++;
+		} else {
+			colors_left[secret[j]]++;
+		}
+	}
+	for (j = 0; j < SLOTS; ++j) {
+	/* not marked red */
+		if (guess[j] != secret[j]) {
+			if (colors_left[guess[j]] > 0) {
+				white++;
+				colors_left[guess[j]]--;
+			}
+		}
+	}
+	/* build response buffer */
+	resp[0] = red;
+	resp[0] |= (white << SHIFT_WIDTH);
+	return red;
+}
+
+static uint16_t get_tipp( uint8_t resp, uint16_t last_guess){
+	uint16_t tipp = 0x00;
+	
+	if(resp > 0){
+		(void) remove_worse_answers(resp, last_guess);
+	}
+	tipp = get_random_answer();
+
+	return set_parity_bit(tipp);
+}
+
+/**
+ * @brief sets a pin for the tipp at a position
+ * @param pos the position of the pin (0-4)
+ * @param c the color to set
+ * @param tipp the pointer to the tipp to get changed
+ */
+void set_pin(int pos, enum color c, uint16_t *tipp){	
+	*tipp &= ~(7 << (pos * SHIFT_WIDTH));
 	*tipp |= c << (pos * SHIFT_WIDTH);
 }
 
-static void set_parity_bit(uint16_t *tipp){
+static uint16_t set_parity_bit(uint16_t tipp){
 	uint8_t parity = 0;
-	uint16_t buffer = *tipp;
-	for ( int j = 0; j < SLOTS; ++j){
+	uint16_t buffer = tipp;
+	int j;
+	for (j = 0; j < SLOTS; ++j){
 		int tmp = buffer & 0x7;
 		parity ^= tmp ^ (tmp >> 1) ^ (tmp >> 2);
 		buffer >>= SHIFT_WIDTH;
 	}
+	parity &= 0x1;
+	tipp |= parity << 15;  
+	return tipp;
+}
+
+static void remove_worse_answers(uint8_t last_resp,uint16_t last_guess){
+	uint8_t last_secret[SLOTS];
+	uint8_t last_correct = (((last_resp & 7) << SHIFT_WIDTH)|((last_resp>>SHIFT_WIDTH)&7));
+	for(int j = 0; j < SLOTS; ++j){
+		last_secret[j] = (last_guess >> (SHIFT_WIDTH * j)) & 7;	
+	}
+	node_t *current = possibilities;
+	node_t *last = NULL;
+	//delete all possible values that have a smaller value than the last guess
+	while(current != NULL){
+		uint8_t resp;
+		uint8_t correct_guesses = 0;
+		(void) compute_answer(current->val,&resp,last_secret);
+		correct_guesses = (((resp & 7) << SHIFT_WIDTH)|((resp>>SHIFT_WIDTH)&7));
+		if(correct_guesses < last_correct){
+			if(last != NULL){
+				last->next = current->next;
+				(void) free(current);
+				current = last->next;
+			}else{ //the head has to get deleted
+				possibilities = current->next;
+				(void) free(current);
+				current = possibilities;
+			}
+			s_possibilities--;
+		} else{
+			last = current;
+			current = current->next;
+		}
+	}
+	printf("%d\n",s_possibilities);
+}
+
+static uint16_t get_random_answer(){
+	if(s_possibilities == 1){
+		return possibilities->val;
+	}
+	uint16_t r = rand() % s_possibilities;
+	uint16_t ret = 0;
+	node_t *current = possibilities;
+	node_t *last = NULL;
+	while(--r > 0 && current->next != NULL){
+		last = current;
+		current = current->next;
+	}
+	ret = current->val;
+	if(last == NULL){
+		possibilities = current->next;
+	} else{
+		last->next = current->next;
+	}
+	free(current);
+	s_possibilities--;
+	return ret;
 }
 
 /**
@@ -300,24 +473,42 @@ static void set_parity_bit(uint16_t *tipp){
  */
 int main(int argc, char **argv) {
 	struct opts options;
-	int running = 1;
+	sigset_t blocked_signals;
+	uint16_t tipp = 0;
+	uint8_t read_buffer = 0;
+	bool running = true;
 	int round = 0;
-	uint16_t tipp;
-	uint8_t read_buffer;
 
 	parse_args(argc,argv,&options);
+
+	/* setup signal handlers */
+
+	if(sigfillset(&blocked_signals) < 0){
+		bail_out(EXIT_FAILURE, "sigfillset");
+	} else{
+		const int signals[] = {SIGINT, SIGQUIT, SIGTERM };
+		struct sigaction s;
+		s.sa_handler = signal_handler;
+		(void) memcpy(&s.sa_mask, &blocked_signals, sizeof(s.sa_mask));
+		s.sa_flags = SA_RESTART;
+		for(int i = 0; i < COUNT_OF(signals); i++){
+			if (sigaction(signals[i], &s, NULL) < 0){
+				bail_out(EXIT_FAILURE, "sigaction");
+			}
+		}
+	}
+
+	compute_possibilities();
 	connfd = create_connection(&options);
 
 	/* GAME LOOP */
 	do{
 		round++;
-		tipp = get_tipp();
+		tipp = get_tipp(read_buffer, tipp);
 		(void) send(connfd,&tipp,2,0);
 		DEBUG("Sent 0x%x\n",tipp);
-
 		(void) recv(connfd, &read_buffer, 1, 0);
-		DEBUG("Got byte 0x%x\n",read_buffer);
-		
+		DEBUG("Got byte 0x%x\n",read_buffer);	
 		switch(read_buffer >> PARITY_ERR_BIT) {
 			case 1:
 				(void) bail_out(EXIT_PARITY_ERROR,"Parity error");
@@ -335,6 +526,7 @@ int main(int argc, char **argv) {
 		if((read_buffer & 7) == 5) //all answers (first 3 bits) are true
 		{
 			printf("Rounds: %d\n",round);
+			free_resources();
 			return 0;
 		}
 		
