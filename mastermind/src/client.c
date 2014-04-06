@@ -21,6 +21,7 @@
 #include <netdb.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <time.h>
 
 /* === Constants === */
 
@@ -39,7 +40,7 @@
 #define EXIT_GAME_LOST (3)
 #define EXIT_MULTIPLE_ERRORS (4)
 
-#define POSSIBILITIES (32767)
+#define POSSIBILITIES (32768)
  
 /* === Macros === */
 
@@ -79,6 +80,9 @@ static int connfd = -1;
 
 /* linked list of possibilities */
 static node_t *possibilities = NULL;
+
+/* array for responses */
+static uint8_t responses[POSSIBILITIES];
 
 /* number of elements in possibilities*/
 static uint16_t s_possibilities = POSSIBILITIES;
@@ -178,7 +182,7 @@ static void bail_out(int eval, const char *fmt, ...)
     }
     (void) fprintf(stderr, "\n");
 
-    free_resources();
+    (void) free_resources();
     exit(eval);
 }
 
@@ -188,7 +192,7 @@ void free_list (node_t *head){
 	while(head != NULL){
 		tmp = head;
 		head = head->next;
-		free(tmp);
+		(void) free(tmp);
 	}
 }
 
@@ -209,7 +213,7 @@ static void free_resources(void)
     if(connfd >= 0) {
         (void) close(connfd);
     }
-	free_list(possibilities);
+	(void) free_list(possibilities);
 	
 }
 
@@ -261,7 +265,7 @@ static void parse_args(int argc, char **argv, struct opts *options)
 	options->server_hostname = host_arg; 	
     options->server_port = port_arg;	
 
-	DEBUG("Parsing Arguments finished! Port: %s, Host: %s\n",options->server_port,options->server_hostname);
+	DEBUG("Parsing Arguments finished.\nPort: %s, Host: %s\n",options->server_port,options->server_hostname);
 }
 
 static int create_connection(struct opts *options)
@@ -295,17 +299,17 @@ static int create_connection(struct opts *options)
 		(void) bail_out(EXIT_FAILURE, "Socket creation failed\n");
 	}
 	
-	DEBUG("socket created!\n");
+	DEBUG("socket created.\n");
 
 	if(connect(sockfd, ai_sel->ai_addr, ai_sel->ai_addrlen) <0)
 	{
 		(void) close(sockfd);
-		freeaddrinfo(ai);
+		(void) freeaddrinfo(ai);
 		(void) bail_out(EXIT_FAILURE, "Connection failed.");
 		
 	}
-	DEBUG("Connected to the Server!\n");
-	freeaddrinfo(ai);
+	DEBUG("Connected to the Server.\n");
+	(void) freeaddrinfo(ai);
 
 	return sockfd;
 }
@@ -315,11 +319,12 @@ static void compute_possibilities(){
 	possibilities = malloc(sizeof(node_t));
 	node_t * curr = possibilities;
 	uint16_t x = 0;
-	while(x < s_possibilities + 1){
+	while(x < s_possibilities){
 		curr->val = x++;
-		if(x < s_possibilities + 1){
+		if(x < s_possibilities){
 			curr->next = malloc(sizeof(node_t));
 			curr = curr->next;
+			responses[x]=0;
 		} else{
 			curr->next = NULL;
 		}
@@ -341,7 +346,7 @@ static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)
 	int guess[COLORS];
 	int red, white;
 	int j;
-	/* extract the guess and calculate parity */
+	/* extract the guess */
 	for (j = 0; j < SLOTS; ++j) {
 		int tmp = req & 0x7;
 		guess[j] = tmp;
@@ -373,94 +378,140 @@ static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)
 	return red;
 }
 
-static uint16_t get_tipp( uint8_t resp, uint16_t last_guess){
-	uint16_t tipp = 0x00;
-	
-	if(resp > 0){
-		(void) remove_worse_answers(resp, last_guess);
-	}
-	tipp = get_random_answer();
+uint16_t minimax_answer(){
+	uint16_t best_worst_case = s_possibilities + 100;
+	uint16_t tipp = 0;
+	node_t *current = possibilities;
+	while(current != NULL){
+		uint8_t remaining[SLOTS];
+		node_t *buff = possibilities;
+		uint8_t secret[SLOTS];
+		for(int j = 0; j < SLOTS; ++j){
+			secret[j] = (current->val >> (SHIFT_WIDTH * j)) & 7;	
+		}
 
-	return set_parity_bit(tipp);
-}
-
-/**
- * @brief sets a pin for the tipp at a position
- * @param pos the position of the pin (0-4)
- * @param c the color to set
- * @param tipp the pointer to the tipp to get changed
- */
-void set_pin(int pos, enum color c, uint16_t *tipp){	
-	*tipp &= ~(7 << (pos * SHIFT_WIDTH));
-	*tipp |= c << (pos * SHIFT_WIDTH);
-}
-
-static uint16_t set_parity_bit(uint16_t tipp){
-	uint8_t parity = 0;
-	uint16_t buffer = tipp;
-	int j;
-	for (j = 0; j < SLOTS; ++j){
-		int tmp = buffer & 0x7;
-		parity ^= tmp ^ (tmp >> 1) ^ (tmp >> 2);
-		buffer >>= SHIFT_WIDTH;
-	}
-	parity &= 0x1;
-	tipp |= parity << 15;  
+		while(buff != NULL){
+			uint8_t resp = 0;
+			(void) compute_answer(buff->val,&resp,secret);
+			int score = (((resp & 7) << SHIFT_WIDTH) + ((resp>>SHIFT_WIDTH)&7));
+			remaining[score]++;
+			buff = buff->next;
+		}
+		int worst_case = 0;
+		for(int i = 0; i < COUNT_OF(remaining); ++i){
+			if(remaining[i]>worst_case) {
+				worst_case = remaining[i];
+			}
+		}
+		if(worst_case < best_worst_case){
+			best_worst_case = worst_case;
+			tipp = current->val;
+		}
+		current = current->next;	
+	}	
 	return tipp;
 }
 
-static void remove_worse_answers(uint8_t last_resp,uint16_t last_guess){
-	uint8_t last_secret[SLOTS];
-	uint8_t last_correct = (((last_resp & 7) << SHIFT_WIDTH)|((last_resp>>SHIFT_WIDTH)&7));
-	for(int j = 0; j < SLOTS; ++j){
-		last_secret[j] = (last_guess >> (SHIFT_WIDTH * j)) & 7;	
+	static uint16_t get_tipp( uint8_t resp, uint16_t last_guess){
+		uint16_t tipp = 0x00;
+		if(s_possibilities != POSSIBILITIES){
+			(void) remove_worse_answers(resp, last_guess);
+		}
+		//tipp = minimax_answer();
+		tipp = get_random_answer();
+		return set_parity_bit(tipp);
 	}
-	node_t *current = possibilities;
-	node_t *last = NULL;
-	//delete all possible values that have a smaller value than the last guess
-	while(current != NULL){
-		uint8_t resp;
-		uint8_t correct_guesses = 0;
-		(void) compute_answer(current->val,&resp,last_secret);
-		correct_guesses = (((resp & 7) << SHIFT_WIDTH)|((resp>>SHIFT_WIDTH)&7));
-		if(correct_guesses < last_correct){
-			if(last != NULL){
-				last->next = current->next;
-				(void) free(current);
-				current = last->next;
-			}else{ //the head has to get deleted
-				possibilities = current->next;
-				(void) free(current);
-				current = possibilities;
+
+	/**
+	 * @brief sets a pin for the tipp at a position
+	 * @param pos the position of the pin (0-4)
+	 * @param c the color to set
+	 * @param tipp the pointer to the tipp to get changed
+	 */
+	void set_pin(int pos, enum color c, uint16_t *tipp){	
+		*tipp &= ~(7 << (pos * SHIFT_WIDTH));
+		*tipp |= c << (pos * SHIFT_WIDTH);
+	}
+
+	static uint16_t set_parity_bit(uint16_t tipp){
+		uint8_t parity = 0;
+		uint16_t buffer = tipp;
+		int j;
+		for (j = 0; j < SLOTS; ++j){
+			int tmp = buffer & 0x7;
+			parity ^= tmp ^ (tmp >> 1) ^ (tmp >> 2);
+			buffer >>= SHIFT_WIDTH;
+		}
+		parity &= 0x1;
+		tipp |= parity << 15;  
+		return tipp;
+	}
+
+	static void remove_worse_answers(uint8_t last_resp,uint16_t last_guess){
+		//uint8_t last_correct = (((last_resp & 7) << SHIFT_WIDTH)|((last_resp>>SHIFT_WIDTH)&7));
+		node_t *current = possibilities;
+		node_t *last = NULL;
+		last_resp &= 63; //delete the server status bits
+		//delete all possible values that have a smaller value than the last guess
+		while(current != NULL){
+			uint8_t resp;
+			uint8_t secret[SLOTS];
+			for(int j = 0; j < SLOTS; ++j){
+				secret[j] = (current->val >> (SHIFT_WIDTH * j)) & 7;	
 			}
-			s_possibilities--;
-		} else{
+			(void) compute_answer(last_guess,&resp,secret);
+			//uint8_t correct_guesses = (((resp & 7) << SHIFT_WIDTH)|((resp>>SHIFT_WIDTH)&7));
+			if(resp != last_resp){
+				if(last != NULL){
+					last->next = current->next;
+					(void) free(current);
+					current = last->next;
+				}else{ //the head has to get deleted
+					possibilities = current->next;
+					(void) free(current);
+					current = possibilities;
+				}
+				s_possibilities--;
+			} else{
+				last = current;
+				current = current->next;
+			}
+		}	
+		DEBUG("remaining possibilities: %d\n",s_possibilities);
+	}
+
+static uint16_t get_random_answer(){
+	
+	uint16_t r = rand() % s_possibilities;
+	DEBUG("r = %d\n",r);
+	/* //if you want to make a good first guess
+	if(s_possibilities == POSSIBILITIES){
+		r = 18568; //bbgor
+	}else{
+		r = rand() % s_possibilities;
+	}
+	*/
+	uint16_t ret = 0;
+	if(s_possibilities == 1){
+		ret = possibilities->val;
+		(void) free(possibilities);
+		possibilities = NULL;	
+	}else if(r == 0){
+		ret = possibilities->val;
+		node_t *tmp = possibilities;
+		possibilities = possibilities->next;
+		(void) free(tmp);
+	}else {
+		node_t *current = possibilities;
+		node_t *last = NULL;
+		while(r-- > 0){
 			last = current;
 			current = current->next;
 		}
-	}
-	printf("%d\n",s_possibilities);
-}
-
-static uint16_t get_random_answer(){
-	if(s_possibilities == 1){
-		return possibilities->val;
-	}
-	uint16_t r = rand() % s_possibilities;
-	uint16_t ret = 0;
-	node_t *current = possibilities;
-	node_t *last = NULL;
-	while(--r > 0 && current->next != NULL){
-		last = current;
-		current = current->next;
-	}
-	ret = current->val;
-	if(last == NULL){
-		possibilities = current->next;
-	} else{
+		ret = current->val;
 		last->next = current->next;
+		(void) free(current);
 	}
-	free(current);
 	s_possibilities--;
 	return ret;
 }
@@ -501,6 +552,7 @@ int main(int argc, char **argv) {
 	compute_possibilities();
 	connfd = create_connection(&options);
 
+	(void) srand(time(NULL));	
 	/* GAME LOOP */
 	do{
 		round++;
@@ -525,8 +577,8 @@ int main(int argc, char **argv) {
 
 		if((read_buffer & 7) == 5) //all answers (first 3 bits) are true
 		{
-			printf("Rounds: %d\n",round);
-			free_resources();
+			printf("%d\n",round);
+			(void) free_resources();
 			return 0;
 		}
 		
