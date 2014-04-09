@@ -2,6 +2,8 @@
 #include <stdlib.h>             /* EXIT_FAILURE and EXIT_SUCCESS */
 #include <assert.h>             /* assert() */
 #include <string.h>
+#include <limits.h>
+#include <errno.h>
 #include "list.h"
 
 #define STREQ(a,b) (strcmp((a), (b)) == 0)
@@ -15,10 +17,10 @@ static void usage(void);
 /* implementation for challenge 2 */
 static void insert_after(struct listelem *after, const char *const value)
 {
-    /* TODO: insert your code */
-    /* when setting 'val' of the list, use strdup(value); */
-    /* if you do not use strdup(), destroy() will fail/crash */
-    return;
+	struct listelem *tmp = after->next;
+	after->next = malloc(sizeof(struct listelem));
+	after->next->next = tmp;
+	after->next->val = strdup(value);
 }
 
 int main(int argc, char **argv)
@@ -42,21 +44,61 @@ int main(int argc, char **argv)
         switch (opt) {
         case 's':
             if (opt_s != -1) {
-                fprintf(stderr, "opt_s multiple times\n");
-                usage()         /* does not return */
+                (void) fprintf(stderr, "opt_s multiple times\n");
+                (void) usage();         /* does not return */
             }
-            opt_s = -1;
+            opt_s = 1;
             break;
-        case 'x':
+        case 'a':
             if (opt_a != -1) {
-                fprintf(stderr, "opt_a multiple times\n");
-                usage();        /* does not return */
+                (void) fprintf(stderr, "opt_a multiple times\n");
+                (void) usage();        /* does not return */
             }
-            opt_a = 23;         /* strtol return checking not required */
+			char *endptr;
+			long val;
+			errno = 0;
+			val = strtol(optarg,&endptr,10);
+			if((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+				|| (errno != 0 && val == 0)) {
+				(void) fprintf(stderr, "strtol\n");
+				(void) usage();
+			}
+
+			if(endptr == optarg){
+				(void) fprintf(stderr, "strtol\n");
+				(void) usage();
+			}
+
+			if(*endptr != '\0'){
+				(void) fprintf(stderr, "Further character after number: %s\n", endptr);	
+			}
+            opt_a = val;         /* strtol return checking not required */
             break;
+		case '?':
+			(void) fprintf(stderr, "unknown flag.\n");
+			(void) usage();
+		default:
+			assert(0);
+			break;
             /* maybe add some extra checks for unknown options */
         }
+
     }
+	if(((opt_s == -1) && (opt_a == -1)) || ((opt_s > 0) && (opt_a > 0))){
+		(void) fprintf(stderr, "use eighter the flag -a or the flag -s.\n");
+		(void) usage();
+	}
+	
+	if(optind >= argc){
+		(void) fprintf(stderr, "you need an argument\n");
+		(void) usage();
+	}
+	
+	if(optind+1 < argc){
+		(void) fprintf(stderr, "Too many arguments\n");
+		(void) usage();
+	}
+	optstr = argv[optind];
     /* END OF INTENTIONAL ERRORS */
 
     /* CHALLENGE 0:
@@ -75,12 +117,13 @@ int main(int argc, char **argv)
      * 'yes,' if it is equal to <string>, else 'no,' */
 
     if (opt_s != -1) {
-        for (; 0;) {            /* TODO: change it */
-            if (STREQ("foo", "bar")) {  /* TODO: change it */
+		while(current != NULL){
+            if (STREQ(current->val,optstr )) {  
                 printf("yes,");
             } else {
                 printf("no,");
             }
+			current = current->next;
         }
         printf("\n");           /* do not remove this line */
     }
@@ -92,8 +135,9 @@ int main(int argc, char **argv)
      * for debugging, the list can be printed with 'print_list(head)' */
     if (opt_a != -1) {
         /* iterate over the list and stop at the right entry */
-        for (; 0;) {            /* TODO: change it */
-            ;
+        while(opt_a > 0 && current->next != NULL) {
+			current = current->next;
+			opt_a--;
         }
         insert_after(current, optstr);  /* assuming you stopped at current */
         check_list(head);       /* do not remove this line or your solution does not count */
