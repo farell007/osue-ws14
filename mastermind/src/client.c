@@ -60,6 +60,7 @@ struct opts {
 	const char *server_hostname;
 };
 
+/*a node of a linked list datastructure that contains integers*/
 typedef struct node{
 	uint16_t val;
 	struct node * next;
@@ -165,6 +166,7 @@ static void remove_worse_answers(uint8_t resp, uint16_t last_guess);
  * @return a possible solution
  */
 static uint16_t get_random_answer( void ); 
+
 /* === Implementations === */
 
 static void bail_out(int eval, const char *fmt, ...)
@@ -378,40 +380,6 @@ static int compute_answer(uint16_t req, uint8_t *resp, uint8_t *secret)
 	return red;
 }
 
-uint16_t minimax_answer(){
-	uint16_t best_worst_case = s_possibilities + 100;
-	uint16_t tipp = 0;
-	node_t *current = possibilities;
-	while(current != NULL){
-		uint8_t remaining[SLOTS];
-		node_t *buff = possibilities;
-		uint8_t secret[SLOTS];
-		for(int j = 0; j < SLOTS; ++j){
-			secret[j] = (current->val >> (SHIFT_WIDTH * j)) & 7;	
-		}
-
-		while(buff != NULL){
-			uint8_t resp = 0;
-			(void) compute_answer(buff->val,&resp,secret);
-			int score = (((resp & 7) << SHIFT_WIDTH) + ((resp>>SHIFT_WIDTH)&7));
-			remaining[score]++;
-			buff = buff->next;
-		}
-		int worst_case = 0;
-		for(int i = 0; i < COUNT_OF(remaining); ++i){
-			if(remaining[i]>worst_case) {
-				worst_case = remaining[i];
-			}
-		}
-		if(worst_case < best_worst_case){
-			best_worst_case = worst_case;
-			tipp = current->val;
-		}
-		current = current->next;	
-	}	
-	return tipp;
-}
-
 	static uint16_t get_tipp( uint8_t resp, uint16_t last_guess){
 		uint16_t tipp = 0x00;
 		if(s_possibilities != POSSIBILITIES){
@@ -482,15 +450,15 @@ uint16_t minimax_answer(){
 
 static uint16_t get_random_answer(){
 	
-	uint16_t r = rand() % s_possibilities;
+	uint16_t r; 
 	DEBUG("r = %d\n",r);
-	/* //if you want to make a good first guess
+	//if you want to make a good first guess
 	if(s_possibilities == POSSIBILITIES){
 		r = 18568; //bbgor
 	}else{
 		r = rand() % s_possibilities;
 	}
-	*/
+	
 	uint16_t ret = 0;
 	if(s_possibilities == 1){
 		ret = possibilities->val;

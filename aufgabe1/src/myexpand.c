@@ -16,7 +16,7 @@
 #define NRELEMENTS(a) (sizeof(a) / sizeof(a[0]))
 
 /* === CONST === */
-static char* pgm_name;
+static char* pgm_name = "myexpand";
 static const char usage[] = "USAGE:\n\tmyexpand [-t tabstop] [file...]";
 
 /* === PROTOTYPES === */
@@ -124,12 +124,12 @@ static int parseInput(int argc, char **argv, unsigned int *tabstop, unsigned int
 						return 0; /* Read from stdin */
 				
 			break;
-			case '?': /* ungueltiges Argument */
+			case '?': /* invalid Argument */
 				(void) fprintf(stderr, "%s: This flag is unknown!\n%s\n", pgm_name,usage);
 				exit(EXIT_FAILURE);
 				
 			break;
-			default: /* unmoeglich */
+			default: /* impossible */
 				assert( 0 );
 		}
 	}

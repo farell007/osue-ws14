@@ -15,7 +15,7 @@ avgs_file="test_avgs"
 port=4242
 
 rm "$client_output_file"
-for i in {1..1000}
+for i in {1..100}
 do
 	colorcombo=${color[$RANDOM % 8]}${color[$RANDOM % 8]}${color[$RANDOM % 8]}${color[$RANDOM % 8]}${color[$RANDOM % 8]}
 

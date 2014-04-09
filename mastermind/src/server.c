@@ -301,6 +301,7 @@ int main(int argc, char *argv[])
        `connfd`. Terminate the program in case of an error.
     */
 
+	/* Create TCP/IP socket*/
 	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(sockfd < 0){
 		(void) bail_out(EXIT_FAILURE,"error opening socket");
@@ -309,16 +310,18 @@ int main(int argc, char *argv[])
 	DEBUG("socket retrieve success\n");
 
 	ai.sin_family = AF_INET;
-	ai.sin_port =htons(options.portno);
+	ai.sin_port =htons(options.portno); /*htons is used to stay platform independent*/
 	ai.sin_addr.s_addr = INADDR_ANY;
 	bzero(&ai.sin_zero, sizeof(ai.sin_zero));
 
 
+	/*Set the SO_RESUSEADDR option*/
 	optval = 1;
 	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0){
 		(void) bail_out(EXIT_FAILURE,"error setting the server to SO_REUSEADDR");
 	}
 
+	/*bind the socket*/
 	if(bind(sockfd, (struct sockaddr*)&ai,sizeof(ai)) < 0){ 
 		(void) bail_out(EXIT_FAILURE,"error binding socket");
 	}
@@ -331,7 +334,6 @@ int main(int argc, char *argv[])
 		(void) close(sockfd);
 	    (void) bail_out(EXIT_FAILURE,"Could not set socket to passive\n");
 	}
-
 	connfd = accept(sockfd, (struct sockaddr*) &client_addr, &client_addr_len);
 	char str[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET,&(client_addr.sin_addr),str,INET_ADDRSTRLEN);
