@@ -40,7 +40,29 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="globals.html"><span>File&nbsp;Members</span></a></li>
     </ul>
   </div>
-<h1>src/child.h</h1><div class="fragment"><pre class="fragment"></pre></div></div>
+<h1>src/child.h</h1><a href="child_8h.html">Go to the documentation of this file.</a><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 
+<a name="l00008"></a>00008 <span class="preprocessor">#ifndef dp_child_h </span><span class="comment">/*prevent multible inclusion*/</span> 
+<a name="l00009"></a>00009 <span class="preprocessor">#define dp_child_h</span>
+<a name="l00010"></a>00010 <span class="preprocessor"></span>
+<a name="l00011"></a>00011 <span class="preprocessor">#include &quot;<a class="code" href="calculator_8h.html" title="This headerfile contains the Prototypes, Constants and Macros of &amp;quot;calculator...">calculator.h</a>&quot;</span>
+<a name="l00012"></a>00012 
+<a name="l00013"></a>00013 <span class="comment">/* CONSTANTS */</span>
+<a name="l00014"></a>00014 
+<a name="l00015"></a>00015 <span class="comment">/* MACROS */</span>
+<a name="l00016"></a>00016 
+<a name="l00017"></a>00017 <span class="comment">/* GLOBAL VARIABLES */</span>
+<a name="l00018"></a>00018 
+<a name="l00019"></a>00019 <span class="comment">/* PROTOTYPES */</span>
+<a name="l00020"></a>00020 
+<a name="l00024"></a>00024 <span class="keywordtype">void</span> <a class="code" href="child_8h.html#a920e12df4ba754f247dc0ceac939abe1" title="exits the parent process and closes all resources">bail_out_child</a>(<span class="keywordtype">int</span> eval, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, ...); 
+<a name="l00025"></a>00025 
+<a name="l00030"></a>00030 <span class="keywordtype">void</span> <a class="code" href="child_8h.html#ad6574c02e1c67e0d603bec4b9ceb610f" title="free all resources from the child">free_child_resources</a>( <span class="keywordtype">void</span> );
+<a name="l00031"></a>00031 
+<a name="l00036"></a>00036 <span class="keywordtype">void</span> <a class="code" href="child_8c.html#aeddd5f5bd7604d866ee9d5c02570e22a" title="the main function of the child process. this method is called from the main function...">childProcess</a>( <span class="keywordtype">int</span>* pipes);
+<a name="l00037"></a>00037 
+<a name="l00038"></a>00038 
+<a name="l00039"></a>00039 <span class="preprocessor">#endif </span><span class="comment">/*ifndef dp_child_h*/</span>
+</pre></div></div>
 <!--- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -55,7 +77,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </iframe>
 </div>
 
-<hr size="1"/><address style="text-align: right;"><small>Generated on 24 Apr 2014 for calculator by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 28 Apr 2014 for calculator by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

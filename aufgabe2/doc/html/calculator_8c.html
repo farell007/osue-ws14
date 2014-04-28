@@ -46,10 +46,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>This program calculates simple equations with two operants and one operator.  
 <a href="#_details">More...</a></p>
 <code>#include &quot;<a class="el" href="calculator_8h_source.html">calculator.h</a>&quot;</code><br/>
+<code>#include &quot;<a class="el" href="parent_8h_source.html">parent.h</a>&quot;</code><br/>
+<code>#include &quot;<a class="el" href="child_8h_source.html">child.h</a>&quot;</code><br/>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="calculator_8c.html#a1934a416d28929eed6c64e1317c120f2">bail_out</a> (int eval, const char *fmt,...)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">terminate program on program error closes all open streams and print error message  <a href="#a1934a416d28929eed6c64e1317c120f2"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="calculator_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a> (void)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">This function prints the usage information (SYNOPSIS) onto stderr.  <a href="#ae8605e2b78cd4a81b6c6b5c30cb7366a"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="calculator_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The program is forked into a parent and a child process. The parent handles the input of the calculations and sends them to the child process. This process parses the input and calculates it. The result gets sent back to the parent and printed onto stdout.  <a href="#a0ddf1224851353fc92bfbff6f499fa97"></a><br/></td></tr>
 </table>
@@ -139,6 +143,28 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 </div>
 </div>
+<a class="anchor" id="ae8605e2b78cd4a81b6c6b5c30cb7366a"></a><!-- doxytag: member="calculator.c::usage" ref="ae8605e2b78cd4a81b6c6b5c30cb7366a" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void usage </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>This function prints the usage information (SYNOPSIS) onto stderr. </p>
+<p>mandatory usage function</p>
+<p>uses global variable: program_name </p>
+
+</div>
+</div>
 </div>
 <!--- window showing the filter options -->
 <div id="MSearchSelectWindow"
@@ -154,7 +180,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </iframe>
 </div>
 
-<hr size="1"/><address style="text-align: right;"><small>Generated on 24 Apr 2014 for calculator by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 28 Apr 2014 for calculator by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>
