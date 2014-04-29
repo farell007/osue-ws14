@@ -6,12 +6,12 @@
  */
 
 #include "calculator.h"
+#include "parent.h"
+#include "child.h"
+
 
 /* STATIC FUNCTIONS */
 
-static void free_resources(){
-	//TODO
-}
 
 /*IMPLEMENTATIONS*/
 
@@ -30,9 +30,17 @@ void bail_out(int eval, const char *fmt, ...){
 	}
 	(void) fprintf(stderr, "\n");
 
-	free_resources();
 	exit(eval);
 
+}
+
+void usage(void){
+	(void) fprintf(stderr, "%s: SYNOPSIS:\n"
+	"\tcalculator\n"
+	"\t$> <zahl1> <zahl2> <operator>\n\n"
+	"BNF:\n"
+	"\t<zahl>\t::= -?[0-9]+\n"
+	"\t<operator>\t::= +|-|*/\n", program_name);
 }
 
 /* MAIN FUNCTION*/
@@ -48,6 +56,44 @@ void bail_out(int eval, const char *fmt, ...){
  * @return EXIT_SUCCESS on success, EXIT_FAILURE on failure
  */
 int main(int argc, char *argv[]){
-	return 0;
-}
+	if(argc != 0)
+		program_name = argv[0];
+	else
+		program_name = "calculator";
 
+	if(argc != 1){
+		usage();
+		bail_out(EXIT_FAILURE,"wrong usage.");
+	}
+	//create pipes
+	int pipes[2][2];
+
+	if (pipe((int *)&pipes[0]) != 0) {
+		bail_out(EXIT_FAILURE,"Creation of pipe 1 failed");
+	}
+	if (pipe((int *)&pipes[1]) != 0) {
+		bail_out(EXIT_FAILURE,"Creation of pipe 2 failed");
+	}
+
+	//fork program
+	pid_t pid = fork();
+	//from here the program is seperated into two programms
+
+	switch (pid) {
+	case -1:
+		bail_out(EXIT_FAILURE,"can't fork");
+		break;
+	case 0:
+		/* start child */
+		childProcess((int*)&pipes);
+		exit(EXIT_SUCCESS);
+		break;
+	default:
+		/* start parent  */
+		parentProcess((int*)&pipes);
+		exit(EXIT_SUCCESS);
+		break;
+	}
+	/* This should never happen*/
+	assert(0);
+}

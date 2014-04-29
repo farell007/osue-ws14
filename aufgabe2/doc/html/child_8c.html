@@ -48,6 +48,11 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <code>#include &quot;<a class="el" href="calculator_8h_source.html">calculator.h</a>&quot;</code><br/>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#ad6574c02e1c67e0d603bec4b9ceb610f">free_child_resources</a> (void)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">free all resources from the child  <a href="#ad6574c02e1c67e0d603bec4b9ceb610f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a920e12df4ba754f247dc0ceac939abe1"></a><!-- doxytag: member="child.c::bail_out_child" ref="a920e12df4ba754f247dc0ceac939abe1" args="(int eval, const char *fmt,...)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#a920e12df4ba754f247dc0ceac939abe1">bail_out_child</a> (int eval, const char *fmt,...)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">exits the parent process and closes all resources <br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#aeddd5f5bd7604d866ee9d5c02570e22a">childProcess</a> (int *pipes)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the main function of the child process. this method is called from the main function of calculator  <a href="#aeddd5f5bd7604d866ee9d5c02570e22a"></a><br/></td></tr>
 <tr><td colspan="2"><h2>Variables</h2></td></tr>
@@ -60,6 +65,15 @@ FILE *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="ch
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adafcdfe90ece8b3331b8be4273fcc054"></a><!-- doxytag: member="child.c::pipes_global" ref="adafcdfe90ece8b3331b8be4273fcc054" args="" -->
 int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#adafcdfe90ece8b3331b8be4273fcc054">pipes_global</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">gloabal variable for cleanup <br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa1289fc66e9263444fef113f342bd622"></a><!-- doxytag: member="child.c::operand1" ref="aa1289fc66e9263444fef113f342bd622" args="" -->
+long&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#aa1289fc66e9263444fef113f342bd622">operand1</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the first operand <br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af5caf0d2ed4599f432e9e3d5cb164207"></a><!-- doxytag: member="child.c::operand2" ref="af5caf0d2ed4599f432e9e3d5cb164207" args="" -->
+long&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#af5caf0d2ed4599f432e9e3d5cb164207">operand2</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the second operand <br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3ed7383bbb43ac5a1001927a0e74525a"></a><!-- doxytag: member="child.c::operator op" ref="a3ed7383bbb43ac5a1001927a0e74525a" args="" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#a3ed7383bbb43ac5a1001927a0e74525a">operator op</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the operator <br/></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>This file contains the implementation of the child process of the calculator. It parses the input strings and does the calculations. </p>
@@ -92,13 +106,34 @@ int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="chi
 
 </div>
 </div>
+<a class="anchor" id="ad6574c02e1c67e0d603bec4b9ceb610f"></a><!-- doxytag: member="child.c::free_child_resources" ref="ad6574c02e1c67e0d603bec4b9ceb610f" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void free_child_resources </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>free all resources from the child </p>
+<p>closes pipes </p>
+
+</div>
+</div>
 </div>
 <!--- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -107,7 +142,7 @@ int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="chi
 </iframe>
 </div>
 
-<hr size="1"/><address style="text-align: right;"><small>Generated on 28 Apr 2014 for calculator by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 29 Apr 2014 for calculator by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

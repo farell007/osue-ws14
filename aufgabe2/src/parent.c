@@ -32,8 +32,8 @@ void free_parent_resources( void ){
 	DEBUG("Start closing parent process\n");
 	(void) fclose(writing);
 	(void) fclose(reading);
-	(void) close(*(pipes_global) + 0);
-	(void) close(*(pipes_global) + 3);
+	(void) close(*(pipes_global) + CHILD_WRITE);
+	(void) close(*(pipes_global) + PARENT_READ);
 
 	DEBUG("Wait for the child to close\n");
 
@@ -48,7 +48,7 @@ void free_parent_resources( void ){
 /* IMPLEMENTATIONS */
 
 void bail_out_parent(int eval, const char * fmt, ...){
-	DEBUG("bail out parent started");
+	DEBUG("bail out parent started\n");
 	free_parent_resources();
 	va_list arglist;
 	va_start(arglist, fmt);
@@ -62,36 +62,38 @@ void parentProcess( int* pipes){
 
 	pipes_global = pipes;
 
-	reading = fdopen(*(pipes + 2), "r");
+	reading = fdopen(*(pipes + PARENT_READ), "r");
 	if (reading == NULL) {
 		bail_out_parent(EXIT_FAILURE,"parent failed reading pipe");
 	}
-	writing = fdopen(*(pipes + 1), "w");
+	writing = fdopen(*(pipes + CHILD_WRITE), "w");
 	if (writing == NULL) {
 		bail_out_parent(EXIT_FAILURE,"parent failed writing pipe");
 	}
 
-	if(close(*(pipes + 0)) != 0) {
+	if(close(*(pipes + CHILD_READ)) != 0) {
 		bail_out_parent(EXIT_FAILURE,"close + 1 failed");
 	}
-	if(close(*(pipes + 3)) != 0) {
+	if(close(*(pipes + PARENT_WRITE)) != 0) {
 		bail_out_parent(EXIT_FAILURE,"close + 2 failed");
 	}
 
 	/* Get Input */
-	char input[INPUT_BUFFER_LENGTH + 1];
+	char input[INPUT_BUFFER_LENGTH + 2];
 	char result[RESULT_BUFFER_LENGTH + 1];	
 
-	while(fgets(input,INPUT_BUFFER_LENGTH, stdin) != NULL){
-		DEBUG("parent received: %s",input);
+	while(fgets(input,INPUT_BUFFER_LENGTH + 1, stdin) != NULL){
+		DEBUG("parent received: %s\n",input);
 		if( fprintf(writing, "%s", input)<0){
 			bail_out_parent(EXIT_FAILURE,"writing to child via pipe failed");
 		}
 		if( fflush(writing) != 0){
 			bail_out_parent(EXIT_FAILURE,"flushing the pipe to child failed");
 		}
+		DEBUG("parent sent: %s to child\n",input);
 
 		if( fgets(result, RESULT_BUFFER_LENGTH, reading) != NULL){
+			DEBUG("parent received %s from child\n",result);
 			(void) fprintf(stdout, "%s", result);
 		} else{
 			bail_out_parent(EXIT_FAILURE,"the reading of the result from the client got an error");

@@ -11,14 +11,14 @@ DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -DENDEBUG
 CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
 LDFLAGS=
 DIR=src/
-OBJFILES=$(DIR)calculator.o
+OBJFILES=$(DIR)calculator.o $(DIR)child.o $(DIR)parent.o
 
 all: calculator doxygen 
 
 calculator: $(OBJFILES) 
 	$(CC) $(LDFLAGS) -o $@ $^	
 
-%.o: %.c
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 doxygen:
