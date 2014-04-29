@@ -53,6 +53,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a920e12df4ba754f247dc0ceac939abe1"></a><!-- doxytag: member="child.c::bail_out_child" ref="a920e12df4ba754f247dc0ceac939abe1" args="(int eval, const char *fmt,...)" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#a920e12df4ba754f247dc0ceac939abe1">bail_out_child</a> (int eval, const char *fmt,...)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">exits the parent process and closes all resources <br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#a096575f99ad79835c69bad543799cfed">parse_arguments</a> (char *input)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">extract the operands and the operator from the input string  <a href="#a096575f99ad79835c69bad543799cfed"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="child_8c.html#aeddd5f5bd7604d866ee9d5c02570e22a">childProcess</a> (int *pipes)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the main function of the child process. this method is called from the main function of calculator  <a href="#aeddd5f5bd7604d866ee9d5c02570e22a"></a><br/></td></tr>
 <tr><td colspan="2"><h2>Variables</h2></td></tr>
@@ -124,6 +126,33 @@ long&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="chil
 
 <p>free all resources from the child </p>
 <p>closes pipes </p>
+
+</div>
+</div>
+<a class="anchor" id="a096575f99ad79835c69bad543799cfed"></a><!-- doxytag: member="child.c::parse_arguments" ref="a096575f99ad79835c69bad543799cfed" args="(char *input)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static void parse_arguments </td>
+          <td>(</td>
+          <td class="paramtype">char *&nbsp;</td>
+          <td class="paramname"> <em>input</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>extract the operands and the operator from the input string </p>
+<p>saves the operands into the global variables "operand1" and "operand2" and the operator into the global variable "op" </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>input</em>&nbsp;</td><td>the input string in the form: "&lt;zahl1&gt; &lt;zahl2&gt; &lt;operator&gt;" </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

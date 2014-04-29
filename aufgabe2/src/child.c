@@ -57,6 +57,11 @@ void bail_out_child(int eval, const char * fmt, ...){
 	va_end(arglist);
 }
 
+/**
+ * @brief extract the operands and the operator from the input string
+ * @details saves the operands into the global variables "operand1" and "operand2" and the operator into the global variable "op"
+ * @param input the input string in the form: "<zahl1> <zahl2> <operator>"
+ */
 static void parse_arguments(char* input){
 	char *tokens = strtok(input, " ");
 	char* endptr;
