@@ -49,22 +49,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#a24ad7a75d826f1409bbf926836afa17a">free_parent_resources</a> (void)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">free all resources from the child  <a href="#a24ad7a75d826f1409bbf926836afa17a"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">free all resources from the parent and closes the child stream  <a href="#a24ad7a75d826f1409bbf926836afa17a"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a400b97a523037ef36677111b5294d271"></a><!-- doxytag: member="parent.c::bail_out_parent" ref="a400b97a523037ef36677111b5294d271" args="(int eval, const char *fmt,...)" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#a400b97a523037ef36677111b5294d271">bail_out_parent</a> (int eval, const char *fmt,...)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">exits the parent process and closes all resources <br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#a97508f45c2b7d9e02349797e2036407c">parentProcess</a> (int *pipes)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the main function of the parent process. this method is called from the main function of calculator  <a href="#a97508f45c2b7d9e02349797e2036407c"></a><br/></td></tr>
-<tr><td colspan="2"><h2>Variables</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a980b5aecd170aa4fec8e57dbb06a75c5"></a><!-- doxytag: member="parent.c::reading" ref="a980b5aecd170aa4fec8e57dbb06a75c5" args="" -->
-FILE *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#a980b5aecd170aa4fec8e57dbb06a75c5">reading</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">global variable for reading from the pipe from the child process <br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a140158f7d4fe49251830966d8bf0de75"></a><!-- doxytag: member="parent.c::writing" ref="a140158f7d4fe49251830966d8bf0de75" args="" -->
-FILE *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#a140158f7d4fe49251830966d8bf0de75">writing</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">global variable for writing to the pipe to the child process <br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adafcdfe90ece8b3331b8be4273fcc054"></a><!-- doxytag: member="parent.c::pipes_global" ref="adafcdfe90ece8b3331b8be4273fcc054" args="" -->
-int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#adafcdfe90ece8b3331b8be4273fcc054">pipes_global</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">gloabal variable for cleanup <br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="parent_8c.html#a1dd2bb888e6f6e1e2e730fa247128f56">parentProcess</a> (void)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the main function of the parent process. this method is called from the main function of calculator  <a href="#a1dd2bb888e6f6e1e2e730fa247128f56"></a><br/></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>This file contains the implementation of the parent process of the calculator. It waits for user input on the stdin and prints the output from the child process to the stdout. </p>
@@ -87,21 +77,20 @@ int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="par
 </div>
 <div class="memdoc">
 
-<p>free all resources from the child </p>
-<p>free all resources from the parent</p>
-<p>closes pipes </p>
+<p>free all resources from the parent and closes the child stream </p>
+<p>closes pipes: global variables "writing" and "reading" </p>
 
 </div>
 </div>
-<a class="anchor" id="a97508f45c2b7d9e02349797e2036407c"></a><!-- doxytag: member="parent.c::parentProcess" ref="a97508f45c2b7d9e02349797e2036407c" args="(int *pipes)" -->
+<a class="anchor" id="a1dd2bb888e6f6e1e2e730fa247128f56"></a><!-- doxytag: member="parent.c::parentProcess" ref="a1dd2bb888e6f6e1e2e730fa247128f56" args="(void)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void parentProcess </td>
           <td>(</td>
-          <td class="paramtype">int *&nbsp;</td>
-          <td class="paramname"> <em>pipes</em></td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
         </tr>
@@ -110,12 +99,7 @@ int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="par
 <div class="memdoc">
 
 <p>the main function of the parent process. this method is called from the main function of calculator </p>
-<dl><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>pipes</em>&nbsp;</td><td>the pipes for the communication between the child process and the parent process </td></tr>
-  </table>
-  </dd>
-</dl>
+<p>global variable pipes the pipes for the communication between the child process and the parent process </p>
 
 </div>
 </div>
@@ -134,7 +118,7 @@ int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="par
 </iframe>
 </div>
 
-<hr size="1"/><address style="text-align: right;"><small>Generated on 29 Apr 2014 for calculator by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 2 May 2014 for calculator by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

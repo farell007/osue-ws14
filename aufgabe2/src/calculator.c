@@ -6,8 +6,6 @@
  */
 
 #include "calculator.h"
-#include "parent.h"
-#include "child.h"
 
 
 /* STATIC FUNCTIONS */
@@ -56,22 +54,18 @@ void usage(void){
  * @return EXIT_SUCCESS on success, EXIT_FAILURE on failure
  */
 int main(int argc, char *argv[]){
-	if(argc != 0)
-		program_name = argv[0];
-	else
-		program_name = "calculator";
 
 	if(argc != 1){
 		usage();
 		bail_out(EXIT_FAILURE,"wrong usage.");
+	} else{
+		program_name = argv[0];
 	}
-	//create pipes
-	int pipes[2][2];
 
-	if (pipe((int *)&pipes[0]) != 0) {
+	if (pipe((int *)&pipes[PARENT]) != 0) {
 		bail_out(EXIT_FAILURE,"Creation of pipe 1 failed");
 	}
-	if (pipe((int *)&pipes[1]) != 0) {
+	if (pipe((int *)&pipes[CHILD]) != 0) {
 		bail_out(EXIT_FAILURE,"Creation of pipe 2 failed");
 	}
 
@@ -85,12 +79,12 @@ int main(int argc, char *argv[]){
 		break;
 	case 0:
 		/* start child */
-		childProcess((int*)&pipes);
+		childProcess();
 		exit(EXIT_SUCCESS);
 		break;
 	default:
 		/* start parent  */
-		parentProcess((int*)&pipes);
+		parentProcess();
 		exit(EXIT_SUCCESS);
 		break;
 	}

@@ -5,7 +5,10 @@
  * @date 26.04.2014
  */
 
-#ifndef dp_parent_h /*prevent multible inclusion*/ 
+/**
+ * prevent multible inclusion
+ */ 
+#ifndef dp_parent_h 
 #define dp_parent_h
 
 #include "calculator.h"
@@ -16,11 +19,21 @@
 
 /* GLOBAL VARIABLES */
 
+/**
+*@brief global variable for reading from the pipe from the child process
+*/
+FILE * reading;
+
+/**
+*@brief global variable for writing to the pipe to the child process
+*/
+FILE * writing;
+
 /* PROTOTYPES */
 
 /**
- * @brief free all resources from the parent
- * @details closes pipes
+ * @brief free all resources from the parent and closes the child stream
+ * @details closes pipes: global variables "writing" and "reading"
  */
 void free_parent_resources( void );
 
@@ -31,8 +44,8 @@ void bail_out_parent(int eval, const char * fmt, ...);
 
 /**
  * @brief the main function of the parent process. this method is called from the main function of calculator 
- * @param pipes the pipes for the communication between the child process and the parent process
+ * @details global variable pipes the pipes for the communication between the child process and the parent process
  */
-void parentProcess( int* pipes);
+void parentProcess( void );
 
 #endif /*ifndef dp_parent_h*/

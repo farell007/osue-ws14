@@ -41,26 +41,30 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     </ul>
   </div>
 <h1>src/parent.h</h1><a href="parent_8h.html">Go to the documentation of this file.</a><div class="fragment"><pre class="fragment"><a name="l00001"></a>00001 
-<a name="l00008"></a>00008 <span class="preprocessor">#ifndef dp_parent_h </span><span class="comment">/*prevent multible inclusion*/</span> 
-<a name="l00009"></a>00009 <span class="preprocessor">#define dp_parent_h</span>
-<a name="l00010"></a>00010 <span class="preprocessor"></span>
-<a name="l00011"></a>00011 <span class="preprocessor">#include &quot;<a class="code" href="calculator_8h.html" title="This headerfile contains the Prototypes, Constants and Macros of &amp;quot;calculator...">calculator.h</a>&quot;</span>
-<a name="l00012"></a>00012 
-<a name="l00013"></a>00013 <span class="comment">/* CONSTANTS */</span>
-<a name="l00014"></a>00014 
-<a name="l00015"></a>00015 <span class="comment">/* MACROS */</span>
-<a name="l00016"></a>00016 
-<a name="l00017"></a>00017 <span class="comment">/* GLOBAL VARIABLES */</span>
-<a name="l00018"></a>00018 
-<a name="l00019"></a>00019 <span class="comment">/* PROTOTYPES */</span>
-<a name="l00020"></a>00020 
-<a name="l00025"></a>00025 <span class="keywordtype">void</span> <a class="code" href="parent_8c.html#a24ad7a75d826f1409bbf926836afa17a" title="free all resources from the child">free_parent_resources</a>( <span class="keywordtype">void</span> );
+<a name="l00011"></a>00011 <span class="preprocessor">#ifndef dp_parent_h </span>
+<a name="l00012"></a>00012 <span class="preprocessor"></span><span class="preprocessor">#define dp_parent_h</span>
+<a name="l00013"></a>00013 <span class="preprocessor"></span>
+<a name="l00014"></a>00014 <span class="preprocessor">#include &quot;<a class="code" href="calculator_8h.html" title="This headerfile contains the Prototypes, Constants and Macros of &amp;quot;calculator...">calculator.h</a>&quot;</span>
+<a name="l00015"></a>00015 
+<a name="l00016"></a>00016 <span class="comment">/* CONSTANTS */</span>
+<a name="l00017"></a>00017 
+<a name="l00018"></a>00018 <span class="comment">/* MACROS */</span>
+<a name="l00019"></a>00019 
+<a name="l00020"></a>00020 <span class="comment">/* GLOBAL VARIABLES */</span>
+<a name="l00021"></a>00021 
+<a name="l00025"></a><a class="code" href="parent_8h.html#a980b5aecd170aa4fec8e57dbb06a75c5">00025</a> FILE * <a class="code" href="child_8h.html#a980b5aecd170aa4fec8e57dbb06a75c5" title="global variable for reading from the pipe from the parent process">reading</a>;
 <a name="l00026"></a>00026 
-<a name="l00030"></a>00030 <span class="keywordtype">void</span> <a class="code" href="parent_8c.html#a400b97a523037ef36677111b5294d271" title="exits the parent process and closes all resources">bail_out_parent</a>(<span class="keywordtype">int</span> eval, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, ...); 
+<a name="l00030"></a><a class="code" href="parent_8h.html#a140158f7d4fe49251830966d8bf0de75">00030</a> FILE * <a class="code" href="child_8h.html#a140158f7d4fe49251830966d8bf0de75" title="global variable for writing to the pipe to the parent process">writing</a>;
 <a name="l00031"></a>00031 
-<a name="l00036"></a>00036 <span class="keywordtype">void</span> <a class="code" href="parent_8c.html#a97508f45c2b7d9e02349797e2036407c" title="the main function of the parent process. this method is called from the main function...">parentProcess</a>( <span class="keywordtype">int</span>* pipes);
-<a name="l00037"></a>00037 
-<a name="l00038"></a>00038 <span class="preprocessor">#endif </span><span class="comment">/*ifndef dp_parent_h*/</span>
+<a name="l00032"></a>00032 <span class="comment">/* PROTOTYPES */</span>
+<a name="l00033"></a>00033 
+<a name="l00038"></a>00038 <span class="keywordtype">void</span> <a class="code" href="parent_8c.html#a24ad7a75d826f1409bbf926836afa17a" title="free all resources from the parent and closes the child stream">free_parent_resources</a>( <span class="keywordtype">void</span> );
+<a name="l00039"></a>00039 
+<a name="l00043"></a>00043 <span class="keywordtype">void</span> <a class="code" href="parent_8c.html#a400b97a523037ef36677111b5294d271" title="exits the parent process and closes all resources">bail_out_parent</a>(<span class="keywordtype">int</span> eval, <span class="keyword">const</span> <span class="keywordtype">char</span> * fmt, ...); 
+<a name="l00044"></a>00044 
+<a name="l00049"></a>00049 <span class="keywordtype">void</span> <a class="code" href="parent_8c.html#a1dd2bb888e6f6e1e2e730fa247128f56" title="the main function of the parent process. this method is called from the main function...">parentProcess</a>( <span class="keywordtype">void</span> );
+<a name="l00050"></a>00050 
+<a name="l00051"></a>00051 <span class="preprocessor">#endif </span><span class="comment">/*ifndef dp_parent_h*/</span>
 </pre></div></div>
 <!--- window showing the filter options -->
 <div id="MSearchSelectWindow"
@@ -76,7 +80,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </iframe>
 </div>
 
-<hr size="1"/><address style="text-align: right;"><small>Generated on 29 Apr 2014 for calculator by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 2 May 2014 for calculator by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

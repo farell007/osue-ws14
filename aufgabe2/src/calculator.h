@@ -28,31 +28,31 @@
 /**
  * @brief The length of the input string that is received with stdin
  */
-#define INPUT_BUFFER_LENGTH		15
+#define INPUT_BUFFER_LENGTH		(15)
 /**
  * @brief the length of the result string from the child process
  */
-#define RESULT_BUFFER_LENGTH 	15
+#define RESULT_BUFFER_LENGTH 	(15)
 
 /**
- * @brief The index of the read end of the pipe of the parent process
+ * @brief The index of the the pipe of the parent process
  */
-#define PARENT_READ 0
+#define PARENT 			(0)
 
 /**
- * @brief The index of the read end of the pipe of the child process
+ * @brief The index of the the pipe of the child process
  */
-#define CHILD_READ 2
+#define CHILD 			(1)
 
 /**
- * @brief The index of the write end of the pipe of the parent process
+ * @brief The index of the write end of the pipe
  */
-#define PARENT_WRITE 1
+#define WRITE 			(1)
 
 /**
- * @brief The index of the write end of the pipe of the parent process
+ * @brief The index of the read end of the pipe
  */
-#define CHILD_WRITE 3
+#define READ 			(0)
 
 /* MACROS */
 
@@ -72,6 +72,13 @@
  * @brief Program name for usage and error messages
  */
 char* program_name;
+
+/**
+ * @brief this global variable contains the pipes for cleanup
+ * @details use the defines READ, WRITE, PARENT and CHILD to access
+ */
+int pipes[2][2];
+
 
 /* PROTOTYPES */
 

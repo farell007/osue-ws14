@@ -6,22 +6,6 @@
  */
 
 #include "calculator.h"
-
-/**
-*@brief global variable for reading from the pipe from the parent process
-*/
-FILE * reading;
-
-/**
-*@brief global variable for writing to the pipe to the parent process
-*/
-FILE * writing;
-
-/**
- * @brief gloabal variable for cleanup
- */
-int * pipes_global;
-
 /**
  * @brief the first operand
  */
@@ -37,25 +21,9 @@ long operand2;
  */
 operator op;
 
+
+
 /* STATIC FUNCTIONS */
-
-void free_child_resources( void ){
-	DEBUG("Start closing child process\n");
-	(void) fclose(writing);
-	(void) fclose(reading);
-	(void) close(*(pipes_global) + CHILD_READ);
-	(void) close(*(pipes_global) + PARENT_WRITE);
-	DEBUG("child closed\n");
-}
-
-void bail_out_child(int eval, const char * fmt, ...){
-	DEBUG("bail out child started\n");
-	free_child_resources();
-	va_list arglist;
-	va_start(arglist, fmt);
-	bail_out(eval,fmt,arglist);
-	va_end(arglist);
-}
 
 /**
  * @brief extract the operands and the operator from the input string
@@ -113,32 +81,54 @@ static void parse_arguments(char* input){
 
 /* IMPLEMENTATIONS */
 
-void childProcess( int* pipes){
+void free_child_resources( void ){
+	DEBUG("Start closing child process\n");
+	if( fclose(writing) != 0){
+		int errcode = errno;
+		(void) fprintf(stderr, "%s: ", program_name);
+		(void) fprintf(stderr,"closing writing pipe error. Code: %s\n", strerror(errcode));
+	}
+	if( fclose(reading) != 0){
+		int errcode = errno;
+		(void) fprintf(stderr, "%s: ", program_name);
+		(void) fprintf(stderr,"closing reading pipe error. Code: %s\n", strerror(errcode));
+	}
+	DEBUG("child closed\n");
+}
+
+void bail_out_child(int eval, const char * fmt, ...){
+	DEBUG("bail out child started\n");
+	free_child_resources();
+	va_list arglist;
+	va_start(arglist, fmt);
+	bail_out(eval,fmt,arglist);
+	va_end(arglist);
+}
+
+void childProcess( void ){
 
 	DEBUG("starting child process\n");
 
-	pipes_global = pipes;
-
-	reading = fdopen(*(pipes + CHILD_READ), "r");
+	reading = fdopen(pipes[CHILD][READ], "r");
 	if (reading == NULL) {
 		bail_out_child(EXIT_FAILURE,"child failed reading pipe");
 	}
-	writing = fdopen(*(pipes + PARENT_WRITE), "w");
+	writing = fdopen(pipes[PARENT][WRITE], "w");
 	if (writing == NULL) {
 		bail_out_child(EXIT_FAILURE,"child failed writing pipe");
 	}
 
-	if(close(*(pipes + CHILD_WRITE)) != 0) {
+	if(close(pipes[CHILD][WRITE]) != 0) {
 		bail_out_child(EXIT_FAILURE,"close + 1 failed");
 	}
-	if(close(*(pipes + PARENT_READ)) != 0) {
+	if(close(pipes[PARENT][READ]) != 0) {
 		bail_out_child(EXIT_FAILURE,"close + 2 failed");
 	}
 	
 	char readbuffer[INPUT_BUFFER_LENGTH + 2];
 	char result[RESULT_BUFFER_LENGTH + 1];
 
-	while(fgets(readbuffer, INPUT_BUFFER_LENGTH + 1 , reading) != NULL){
+	while(fgets(readbuffer, INPUT_BUFFER_LENGTH + 2 , reading) != NULL){
 		DEBUG("child received: %s\n",readbuffer);
 		
 		(void) parse_arguments(readbuffer);
@@ -162,22 +152,14 @@ void childProcess( int* pipes){
 				assert(0);
 		}
 
-		DEBUG("result = %ld\n",val);
-
-		sprintf(result,"%ld",val);
+		snprintf(result,RESULT_BUFFER_LENGTH,"%ld",val);
 		
 		if( fprintf(writing, "%s\n",result) < 0){
 			bail_out_child(EXIT_FAILURE,"writing to the parent pipe failed");
 		}
-		DEBUG("child: printing finished\n");
 		if( fflush(writing) != 0){
 			bail_out_child(EXIT_FAILURE,"flushing the child pipe failed");
 		}
-		DEBUG("child: flushing finished\n");
-	}
-	
-	if (feof(reading) != 0){
-		bail_out_child(EXIT_FAILURE,"reading from the parent pipe failed");
 	}
 
 	free_child_resources();

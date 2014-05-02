@@ -55,21 +55,21 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a name="l00021"></a>00021 <span class="preprocessor">#include &lt;assert.h&gt;</span>
 <a name="l00022"></a>00022 <span class="preprocessor">#include &lt;limits.h&gt;</span>
 <a name="l00023"></a>00023 
-<a name="l00024"></a>00024 <span class="preprocessor">#include &quot;<a class="code" href="child_8h.html" title="This headerfile contains the Prototypes, Constants and Macros of &amp;quot;child.c&amp;quot;...">child.h</a>&quot;</span>
+<a name="l00024"></a>00024 <span class="preprocessor">#include &quot;<a class="code" href="child_8h.html" title="This headerfilchildains the Prototypes, Constants and Macros of &amp;quot;child.c&amp;quot;...">child.h</a>&quot;</span>
 <a name="l00025"></a>00025 <span class="preprocessor">#include &quot;<a class="code" href="parent_8h.html" title="This headerfile contains the Prototypes, Constants and Macros of &amp;quot;parent.c&amp;quot;...">parent.h</a>&quot;</span>
 <a name="l00026"></a>00026 <span class="comment">/* CONSTANTS */</span>
 <a name="l00027"></a>00027 
-<a name="l00031"></a><a class="code" href="calculator_8h.html#af79018d08efdf872e616ee1677d5663c">00031</a> <span class="preprocessor">#define INPUT_BUFFER_LENGTH             15</span>
+<a name="l00031"></a><a class="code" href="calculator_8h.html#af79018d08efdf872e616ee1677d5663c">00031</a> <span class="preprocessor">#define INPUT_BUFFER_LENGTH             (15)</span>
 <a name="l00032"></a>00032 <span class="preprocessor"></span>
-<a name="l00035"></a><a class="code" href="calculator_8h.html#a830a501c45caef1eeff6c893aa383f16">00035</a> <span class="preprocessor">#define RESULT_BUFFER_LENGTH    15</span>
+<a name="l00035"></a><a class="code" href="calculator_8h.html#a830a501c45caef1eeff6c893aa383f16">00035</a> <span class="preprocessor">#define RESULT_BUFFER_LENGTH    (15)</span>
 <a name="l00036"></a>00036 <span class="preprocessor"></span>
-<a name="l00040"></a><a class="code" href="calculator_8h.html#a658b84b84991fe9685c64d16374a2ac9">00040</a> <span class="preprocessor">#define PARENT_READ 0</span>
+<a name="l00040"></a><a class="code" href="calculator_8h.html#a43bda94ea92b5a0e18e404892f3c2668">00040</a> <span class="preprocessor">#define PARENT                  (0)</span>
 <a name="l00041"></a>00041 <span class="preprocessor"></span>
-<a name="l00045"></a><a class="code" href="calculator_8h.html#a4f832043b69acc134f8cd142cc1e9d9b">00045</a> <span class="preprocessor">#define CHILD_READ 2</span>
+<a name="l00045"></a><a class="code" href="calculator_8h.html#ac04ce74109b413ea192c41d9aa8e5126">00045</a> <span class="preprocessor">#define CHILD                   (1)</span>
 <a name="l00046"></a>00046 <span class="preprocessor"></span>
-<a name="l00050"></a><a class="code" href="calculator_8h.html#a758e627b3cecf43343310e2878e1d2b4">00050</a> <span class="preprocessor">#define PARENT_WRITE 1</span>
+<a name="l00050"></a><a class="code" href="calculator_8h.html#aa10f470e996d0f51210d24f442d25e1e">00050</a> <span class="preprocessor">#define WRITE                   (1)</span>
 <a name="l00051"></a>00051 <span class="preprocessor"></span>
-<a name="l00055"></a><a class="code" href="calculator_8h.html#a9d1ab56d87d6594de8ed11e99e0b31ff">00055</a> <span class="preprocessor">#define CHILD_WRITE 3</span>
+<a name="l00055"></a><a class="code" href="calculator_8h.html#ada74e7db007a68e763f20c17f2985356">00055</a> <span class="preprocessor">#define READ                    (0)</span>
 <a name="l00056"></a>00056 <span class="preprocessor"></span>
 <a name="l00057"></a>00057 <span class="comment">/* MACROS */</span>
 <a name="l00058"></a>00058 
@@ -83,15 +83,18 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a name="l00070"></a>00070 
 <a name="l00074"></a><a class="code" href="calculator_8h.html#a289c5900d90626d909f0a85d5a0ed61d">00074</a> <span class="keywordtype">char</span>* <a class="code" href="calculator_8h.html#a289c5900d90626d909f0a85d5a0ed61d" title="Program name for usage and error messages.">program_name</a>;
 <a name="l00075"></a>00075 
-<a name="l00076"></a>00076 <span class="comment">/* PROTOTYPES */</span>
-<a name="l00077"></a>00077 
-<a name="l00086"></a>00086 <span class="keywordtype">void</span> <a class="code" href="calculator_8c.html#a1934a416d28929eed6c64e1317c120f2" title="terminate program on program error closes all open streams and print error message...">bail_out</a>(<span class="keywordtype">int</span> eval, <span class="keyword">const</span> <span class="keywordtype">char</span> *fmt, ...);
-<a name="l00087"></a>00087 
-<a name="l00093"></a>00093 <span class="keywordtype">void</span> <a class="code" href="calculator_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a" title="This function prints the usage information (SYNOPSIS) onto stderr.">usage</a>(<span class="keywordtype">void</span>);
+<a name="l00080"></a><a class="code" href="calculator_8h.html#a281943ca96e4f630234f58ced77a03e8">00080</a> <span class="keywordtype">int</span> <a class="code" href="calculator_8h.html#a281943ca96e4f630234f58ced77a03e8" title="this global variable contains the pipes for cleanup">pipes</a>[2][2];
+<a name="l00081"></a>00081 
+<a name="l00082"></a>00082 
+<a name="l00083"></a>00083 <span class="comment">/* PROTOTYPES */</span>
+<a name="l00084"></a>00084 
+<a name="l00093"></a>00093 <span class="keywordtype">void</span> <a class="code" href="calculator_8c.html#a1934a416d28929eed6c64e1317c120f2" title="terminate program on program error closes all open streams and print error message...">bail_out</a>(<span class="keywordtype">int</span> eval, <span class="keyword">const</span> <span class="keywordtype">char</span> *fmt, ...);
 <a name="l00094"></a>00094 
-<a name="l00098"></a>00098 <span class="keywordtype">void</span> <a class="code" href="calculator_8h.html#adfd10fab586f1d2f99e3baf123608f79" title="free all resources used by child and parent process">free_resources</a>( <span class="keywordtype">void</span> );
-<a name="l00099"></a>00099 
-<a name="l00100"></a>00100 <span class="preprocessor">#endif </span><span class="comment">/*ifndef dp_calculator_h*/</span>
+<a name="l00100"></a>00100 <span class="keywordtype">void</span> <a class="code" href="calculator_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a" title="This function prints the usage information (SYNOPSIS) onto stderr.">usage</a>(<span class="keywordtype">void</span>);
+<a name="l00101"></a>00101 
+<a name="l00105"></a>00105 <span class="keywordtype">void</span> <a class="code" href="calculator_8h.html#adfd10fab586f1d2f99e3baf123608f79" title="free all resources used by child and parent process">free_resources</a>( <span class="keywordtype">void</span> );
+<a name="l00106"></a>00106 
+<a name="l00107"></a>00107 <span class="preprocessor">#endif </span><span class="comment">/*ifndef dp_calculator_h*/</span>
 </pre></div></div>
 <!--- window showing the filter options -->
 <div id="MSearchSelectWindow"
@@ -107,7 +110,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </iframe>
 </div>
 
-<hr size="1"/><address style="text-align: right;"><small>Generated on 29 Apr 2014 for calculator by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 2 May 2014 for calculator by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>
