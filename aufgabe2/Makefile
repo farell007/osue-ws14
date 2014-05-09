@@ -27,3 +27,4 @@ doxygen:
 clean:
 	rm -f $(OBJFILES)
 	rm -f calculator 
+	rm -fR doc/html
