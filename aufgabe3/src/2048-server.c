@@ -5,7 +5,9 @@
  * @date 26.04.2014
  */
 
-#include "2048-server.h"
+#include "shared.h"
+#include <limits.h>
+#include <assert.h>
 
 extern int shm_id;
 extern int s1;
@@ -134,6 +136,53 @@ static void parse_args(int argc, char **argv, unsigned int *power_of_two)
 	DEBUG("Parsing Arguments finished.\nPower of Two: %d\n",*power_of_two);
 }
 
+static unsigned int new_number_field(unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X])
+{
+    int number_zero_fields = 0;
+    for(int y = 0; y < FIELD_SIZE_Y; ++y){
+        for(int x = 0; x < FIELD_SIZE_X; ++x){
+            if(field[y][x] == 0){
+                ++number_zero_fields;
+            }
+        }
+    }
+    if(number_zero_fields == 0){
+    	//Error
+    	return ST_LOST;
+    	DEBUG("NO FIELDS LEFT!\n");
+    } else{
+	    int r = rand() % number_zero_fields + 1;
+	    int power = 2;
+	    if((rand() % 4) < 2){
+	        power = 1;
+	    }
+	    for(int y = 0; y < FIELD_SIZE_Y; ++y){
+	        for(int x = 0; x < FIELD_SIZE_X; ++x){
+	            if(field[y][x] == 0){
+	                if(--r==0){
+	                    field[y][x] = power;
+	                }
+	            }
+	        }
+	    }
+	}
+
+	return ST_ON;
+}
+
+static unsigned int move_numbers_field(unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X], unsigned int command, unsigned int power_of_two)
+{
+    for(int y = 0; y < FIELD_SIZE_Y; ++y){
+        for(int x = 0; x < FIELD_SIZE_X; ++x){
+            if(field[y][x] == power_of_two){
+            	return ST_WON;
+            }
+        }
+    }
+
+    return new_number_field(shared_mem->field);
+}
+
 /* === MAIN FUNCTION === */
 
 /**
@@ -154,27 +203,27 @@ int main(int argc, char ** argv) {
 	DEBUG("Starting Loop\n");
 	do {
 		ERROR_P(s1);
-		switch(shared_mem->command){
-			 case CMD_LEFT:			
-				break;
-			 case CMD_RIGHT:		
-				break;
-			 case CMD_UP:			
-				break;
-			 case CMD_DOWN:			
-				break;
-			 case CMD_DELETE:		
-				break;
-			 case CMD_DISCONNECT:	
-				break;
-			 case CMD_UNSET:		
-				break;
-		}
-		DEBUG("Got:\t%d\n", shared_mem->command);
+			unsigned int cmd = shared_mem->command;
+			unsigned int status;
+			switch(cmd){
+				 case CMD_LEFT:			
+				 case CMD_RIGHT:		
+				 case CMD_UP:			
+				 case CMD_DOWN:			
+				 	status = move_numbers_field(shared_mem->field,cmd,power_of_two);
+					break;
+				 case CMD_DELETE:
+				 	status = ST_DELETE;	
+					break;
+				 case CMD_DISCONNECT:	
+				 	status = ST_HALT;	
+					break;
+			}
+			DEBUG("Got:\t%d\n", shared_mem->command);
 		ERROR_V(s2);
 		ERROR_P(s4);
-		shared_mem->status++;
-		DEBUG("Writing to client %d",shared_mem->status);
+			shared_mem->status = status;
+			DEBUG("Writing to client %d\n",shared_mem->status);
 		ERROR_V(s3);
 	} while (1);
 	

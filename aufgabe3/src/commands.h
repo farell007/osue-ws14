@@ -23,5 +23,7 @@
  #define ST_LOST		(1)
  #define ST_NOSUCHGAME	(2)
  #define ST_ON 			(3)
+ #define ST_DELETE 		(4)
+ #define ST_HALT 		(5)
 
 #endif /*ifndef dp_commands_h*/

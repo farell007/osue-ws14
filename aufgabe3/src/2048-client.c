@@ -5,7 +5,18 @@
  * @date 26.04.2014
  */
 
-#include "2048-client.h"
+#include "shared.h"
+#include <stdbool.h>
+#include <limits.h>
+#include <assert.h>
+#include <time.h>
+
+/* === TYPE DEFINITIONS === */
+
+struct opts {
+    bool new_game;
+    uint16_t id;
+};
 
 extern int shm_id;
 extern int s1;
@@ -168,6 +179,18 @@ static int read_next_command( void )
     assert(0);
 }
 
+static void print_field(unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X])
+{
+    char *line = "+----+----+----+----+";
+    printf("%s\n",line);
+    for(int y = 0; y < FIELD_SIZE_Y; ++y){
+        for(int x = 0; x < FIELD_SIZE_X; ++x){
+            printf("|%4u", field[y][x]);
+        }
+        printf("|\n%s\n",line);
+    }
+}
+
 /* === MAIN FUNCTION === */
 
 /**
@@ -180,6 +203,7 @@ static int read_next_command( void )
 */
 int main(int argc, char ** argv) {
 	struct opts options;
+    srand(time(NULL));
 
     (void) parse_args(argc, argv, &options);
     (void) setup_signal_handler();    
@@ -194,26 +218,43 @@ int main(int argc, char ** argv) {
     while((cmd = read_next_command()) != EOF){
         if(cmd != '\n'){ 
         //to disable the return character it is pretty complicated and not platform independent
+        if (ferror(stdin)) {
+            (void) bail_out(EXIT_FAILURE,"fgetc");
+        }
         ERROR_P(s2);
-            if (ferror(stdin)) {
-                (void) bail_out(EXIT_FAILURE,"fgetc");
-            }
-
-            DEBUG("STATUS: %d",shared_mem->status);
             shared_mem->command = cmd;
             DEBUG("Wrote command '%d' to server\n",cmd);
         ERROR_V(s1);
         ERROR_P(s3);
-            DEBUG("STATUS: %d",shared_mem->status);
-            for(int y = 0; y < FIELD_SIZE_Y; ++y){
-                for(int x = 0; x < FIELD_SIZE_X; ++x){
-                    printf("|%d|", shared_mem->field[y][x]);
-                }
-                printf("\n");
+            unsigned int status = shared_mem->status;
+            DEBUG("STATUS: %d\n",status);
+            switch(status){
+                case ST_WON:
+                    printf("GAME WON!\n");
+                    (void) clean_close();
+                    break;
+                case ST_LOST:
+                    printf("GAME OVER!\n");
+                    (void) clean_close();
+                    break;
+                case ST_ON:
+                    print_field(shared_mem->field);
+                    break;
+                case ST_DELETE:
+                    printf("GAME DELETED!\n");
+                    (void) clean_close();
+                    break;
+                case ST_HALT:
+                    printf("GAME PAUSED!\n");
+                    (void) clean_close();
+                    break;
+                default:
+                    printf("UNKNOWN GAME STATUS!\n");
+                    (void) clean_close();
+                    break;
             }
-        }
         ERROR_V(s4);
-
+        }
     }
 
     (void) clean_close();
