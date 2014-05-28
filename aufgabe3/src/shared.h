@@ -70,11 +70,20 @@ const char * program_name;
 /**
  * TODO
  */
-struct shared_struct 
+struct shared_game 
 {
 	unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X];
     unsigned int status;
     unsigned int command;
+};
+
+/**
+ * TODO
+ */
+struct shared_server
+{
+	uint16_t id;
+	uint16_t number_clients;
 };
 
 

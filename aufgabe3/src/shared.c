@@ -15,7 +15,10 @@ volatile sig_atomic_t terminating = 0;
 /**
  * @brief id for the shared memory
  */
-int shm_id = -1;
+int shm_id_game = -1;
+int shm_id_clients = -1;
+int sem_client = -1;
+int sem_client2 = -1;
 int s1 = -1;
 int s2 = -1;
 int s3 = -1;
@@ -71,12 +74,15 @@ void free_resources (void)
     /* clean up resources */
     DEBUG("Shutting down %s\n",program_name);
     
-    (void) shmctl(shm_id, IPC_RMID, NULL);
-
+    (void) semrm(sem_client);
+    (void) semrm(sem_client2);
     (void) semrm(s1);
     (void) semrm(s2);
     (void) semrm(s3);
     (void) semrm(s4);
+
+    (void) shmctl(shm_id_game, IPC_RMID, NULL);
+    (void) shmctl(shm_id_clients, IPC_RMID, NULL);
 }
 
 void setup_signal_handler (void)
@@ -102,22 +108,35 @@ void setup_signal_handler (void)
 void clean_close(void)
 {
 
+    DEBUG("Clean Close %s\n",program_name);
+
+    if (semrm(sem_client) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore sem_client (semrm)");
+    }
+    if (semrm(sem_client2) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore sem_client (semrm)");
+    }
     if (semrm(s1) < 0) {
-        (void) bail_out(EXIT_FAILURE,"semrm 1");
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 1 (semrm)");
     }
     if (semrm(s2) < 0) {
-        (void) bail_out(EXIT_FAILURE,"semrm 2");
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 2 (semrm)");
     }
     if (semrm(s3) < 0) {
-        (void) bail_out(EXIT_FAILURE,"semrm 3");
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 3 (semrm)");
     }
     if (semrm(s4) < 0) {
-        (void) bail_out(EXIT_FAILURE,"semrm 4");
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 4 (semrm)");
     }
-    
-    // Remove shm
-    if (shmctl(shm_id, IPC_RMID, NULL) < 0) {
-        (void) bail_out(EXIT_FAILURE,"terminating shm (shmctl)");
+
+    // Remove shm game
+    if (shmctl(shm_id_game, IPC_RMID, NULL) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error terminating shared memory of game (shmctl)");
+    }
+
+    // Remove shm game
+    if (shmctl(shm_id_clients, IPC_RMID, NULL) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error terminating shared memory of clients (shmctl)");
     }
 
     exit(EXIT_SUCCESS);
