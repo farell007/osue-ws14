@@ -1,7 +1,7 @@
 /**
  * @file shared.c
  * @author David Pfahler (1126287) <e1126287@student.tuwien.ac.at>
- * @brief TODO
+ * @brief The shared files between the client and the server of a 2048 game
  * @date 26.04.2014
  */
 
@@ -13,15 +13,43 @@
 volatile sig_atomic_t terminating = 0;
 
 /**
- * @brief id for the shared memory
+ * @brief id for the shared memory of one game
  */
 int shm_id_game = -1;
+
+/**
+ * @brief id for the shared memory of the server
+ */
 int shm_id_clients = -1;
+
+/**
+ * @brief semaphore for the client connection to the parent server
+ */
 int sem_client = -1;
+
+/**
+ * @brief semaphore for the client connection to the parent server
+ */
 int sem_client2 = -1;
+
+/**
+ * @brief semaphore for the client connection to the game server that is responsible for one client
+ */
 int s1 = -1;
+
+/**
+ * @brief semaphore for the client connection to the game server that is responsible for one client
+ */
 int s2 = -1;
+
+/**
+ * @brief semaphore for the client connection to the game server that is responsible for one client
+ */
 int s3 = -1;
+
+/**
+ * @brief semaphore for the client connection to the game server that is responsible for one client
+ */
 int s4 = -1;
 
 /* === STATIC FUNCTIONS === */
@@ -42,6 +70,8 @@ void signal_handler(int sig)
 void bail_out(int eval, const char *fmt, ...)
 {
     va_list ap;
+    pid_t pid;
+    int status;
 
     (void) fprintf(stderr, "%s: ", program_name);
     if (fmt != NULL) {
@@ -55,6 +85,19 @@ void bail_out(int eval, const char *fmt, ...)
     (void) fprintf(stderr, "\n");
 
     free_resources();
+   
+    DEBUG("Wait for the childs to close\n");
+
+    pid = wait(&status);
+    
+    if(WEXITSTATUS(status) != EXIT_SUCCESS){
+        (void) fprintf(stderr, "%s: ", program_name);
+        (void) fprintf(stderr,"child with pid %d returned exit code %d.\n", pid, WEXITSTATUS(status));
+        exit(EXIT_FAILURE);
+    }
+    
+
+    DEBUG("SERVER CLOSED\n");
     exit(eval);
 }
 
@@ -85,7 +128,7 @@ void free_resources (void)
     (void) shmctl(shm_id_clients, IPC_RMID, NULL);
 }
 
-void setup_signal_handler (void)
+void setup_signal_handler(void)
 {
     sigset_t blocked_signals;
 
@@ -114,7 +157,7 @@ void clean_close(void)
         (void) bail_out(EXIT_FAILURE,"Error removing the semaphore sem_client (semrm)");
     }
     if (semrm(sem_client2) < 0) {
-        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore sem_client (semrm)");
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore sem_client2 (semrm)");
     }
     if (semrm(s1) < 0) {
         (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 1 (semrm)");

@@ -1,10 +1,11 @@
 /**
  * @file 2048-server.c
  * @author David Pfahler (1126287) <e1126287@student.tuwien.ac.at>
- * @brief TODO
+ * @brief The server of a 2048 game. It gets commands from clients handles them, updates the game field and passes the new field and game status to the client
  * @date 26.04.2014
  */
 
+#include "gamelogic.h"
 #include "shared.h"
 #include <limits.h>
 #include <assert.h>
@@ -18,26 +19,36 @@ extern int s1;
 extern int s2;
 extern int s3;
 extern int s4;
+
+/**
+ * @brief the pointer to the shared memory of a game
+ */
 static struct shared_game *game;
+
+/**
+ * @brief the pointer to the shared memory of a server
+ */
 static struct shared_server *server;
 
 /* === PROTOTYPES */
 
 /**
- * @brief TODO
+ * @brief Initializes the semaphores of a new game
+ * @param key the id of the new game
+ * @details s1,s2,s3,s4
  */
 static void init_semaphors( key_t key );
 
 /**
- * @brief initialize shared memory
- * @details shm_id
+ * @brief initialize shared memory of the server and initializes the semaphores of the server
+ * @details shm_id_clients, server, sem_client, sem_client2
  */
 static void init_shared_memory( void );
 
 /**
- * @brief initialize shared memory
+ * @brief initialize shared memory of new game, starts the game and initializes the semaphoes of it
  * @param key the key of the shared memory
- * @details shm_id
+ * @details shm_id_game, game
  */
 static void init_shared_game( key_t key );
 
@@ -52,18 +63,15 @@ static void usage(void);
  * @brief Parse command line options
  * @param argc The argument counter
  * @param argv The argument vector
- * @param options Struct where parsed arguments are stored
+ * @param power_of_two the power of two that gets set by the parsed argument vector or set to default value
  */
 static void parse_args(int argc, char **argv, unsigned int *power_of_two);
 
-static unsigned int new_number_field(unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X]);
-
-static void move(unsigned int *next,unsigned int *curr);
-
-static unsigned int move_numbers_field(
-	unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X], 
-	unsigned int command, 
-	unsigned int power_of_two);
+/**
+ * @brief free allocated resources of one game but not the parent server and prints error messages if something fails
+ * @details global variables: shm_id_game, s1, s2, s3, s4
+ */
+static void close_game( void );
 
 
 /* === IMPLEMENTATIONS === */
@@ -83,7 +91,7 @@ static void init_semaphors( key_t key )
 	if (s3 < 0) {
 		(void) bail_out(EXIT_FAILURE,"seminit (2) failed");
 	}
-	s4 = seminit(SEM_KEY + 5*key + 4, PERMISSION, 1);
+	s4 = seminit(SEM_KEY + 5*key + 4, PERMISSION, 0);
 	if (s4 < 0) {
 		(void) bail_out(EXIT_FAILURE,"seminit (2) failed");
 	}
@@ -100,7 +108,7 @@ static void init_shared_memory( void )
 		(void) bail_out(EXIT_FAILURE,"shmat failed clients");
 	}
 
-	server->id = 0;
+	server->id = ID_UNSET;
 	server->number_clients = 0;
 
 	sem_client = seminit(SEM_KEY, PERMISSION, 0);
@@ -126,12 +134,12 @@ static void init_shared_game( key_t key )
 		(void) bail_out(EXIT_FAILURE,"shmat failed game");
 	}
 
-	memset( game->field, '\0', sizeof(game->field[0][0])*FIELD_SIZE_X*FIELD_SIZE_Y); 
+	new_game(game->field);
 
 	game->status = ST_ON;
 	game->command = CMD_UNSET;
 
-	(void) init_semaphors( key );
+	(void) init_semaphors( key );	
 }
 
 
@@ -197,131 +205,39 @@ static void parse_args(int argc, char **argv, unsigned int *power_of_two)
 	DEBUG("Parsing Arguments finished.\nPower of Two: %d\n",*power_of_two);
 }
 
-static unsigned int new_number_field(unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X])
+static void close_game( void )
 {
-    int number_zero_fields = 0;
-    for(int y = 0; y < FIELD_SIZE_Y; ++y){
-        for(int x = 0; x < FIELD_SIZE_X; ++x){
-            if(field[y][x] == 0){
-                ++number_zero_fields;
-            }
-        }
+	DEBUG("Clean Close of game %s\n",program_name);
+
+    if (semrm(s1) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 1 (semrm)");
     }
-    if(number_zero_fields == 0){
-    	//Error
-    	return ST_LOST;
-    	DEBUG("NO FIELDS LEFT!\n");
-    } else{
-	    int r = rand() % number_zero_fields + 1;
-	    int power = 2;
-	    if((rand() % 4) < 2){
-	        power = 1;
-	    }
-	    for(int y = 0; y < FIELD_SIZE_Y; ++y){
-	        for(int x = 0; x < FIELD_SIZE_X; ++x){
-	            if(field[y][x] == 0){
-	                if(--r==0){
-	                    field[y][x] = power;
-	                }
-	            }
-	        }
-	    }
-	}
-
-	return ST_ON;
-}
-
-static void move(unsigned int *next,unsigned int *curr)
-{
-	if(*next == 0){
-		*next = *curr;
-		*curr = 0; 
-	} 
-	if(*curr == *next && *next != 0){
-		*curr = 0;
-		*next = *next + 1; 
-	}
-}
-
-static unsigned int move_numbers_field(
-	unsigned int field[FIELD_SIZE_Y][FIELD_SIZE_X], 
-	unsigned int command, 
-	unsigned int power_of_two)
-{
-	unsigned int *next, *curr;
-	switch(command){
-		case CMD_LEFT:	
-			DEBUG("MOVE LEFT!\n");
-			for(int y = 0; y < FIELD_SIZE_Y; ++y){
-				int x = FIELD_SIZE_X -1;
-				next = &field[y][x];
-				while(--x >= 0){
-					curr = next;
-					next = &field[y][x];
-					move(next,curr);
-				}
-		    }
-			break;		
-		case CMD_RIGHT:
-			DEBUG("MOVE RIGHT!\n");
-			for(int y = 0; y < FIELD_SIZE_Y; ++y){
-				int x = 0;
-				next = &field[y][x];
-				while(++x < FIELD_SIZE_X){
-					curr = next;
-					next = &field[y][x];
-					move(next,curr);
-				}
-		    }
-			break;	
-		case CMD_UP:	
-			DEBUG("MOVE UP!\n");
-			for(int x = 0; x < FIELD_SIZE_X; ++x){
-				int y = FIELD_SIZE_Y-1;
-				next = &field[y][x];
-				while(--y >= 0){
-					curr = next;
-					next = &field[y][x];
-					move(next,curr);
-				}
-		    }
-			break;		
-		case CMD_DOWN:
-			DEBUG("MOVE DOWN!\n");
-			for(int x = 0; x < FIELD_SIZE_X; ++x){
-				int y = 0;
-				next = &field[y][x];
-				while(++y < FIELD_SIZE_Y){
-					curr = next;
-					next = &field[y][x];
-					move(next,curr);
-				}
-		    }
-			break;
-		case CMD_DELETE:
-		 	return ST_DELETE;
-		case CMD_DISCONNECT:	
-		 	return ST_HALT;	
-	}
-
-    for(int y = 0; y < FIELD_SIZE_Y; ++y){
-        for(int x = 0; x < FIELD_SIZE_X; ++x){
-            if(field[y][x] == power_of_two){
-            	return ST_WON;
-            }
-        }
+    if (semrm(s2) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 2 (semrm)");
+    }
+    if (semrm(s3) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 3 (semrm)");
+    }
+    if (semrm(s4) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 4 (semrm)");
     }
 
-    return new_number_field(game->field);
+    // Remove shm game
+    if (shmctl(shm_id_game, IPC_RMID, NULL) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error terminating shared memory of game (shmctl)");
+    }
+
+    exit(EXIT_SUCCESS);
+
 }
 
 /**
  * Program entry point
- * @brief TODO
+ * @brief Program entry point
  * @param argc The argument counter
  * @param argv The argument vector
  * @return EXIT_SUCCESS on success, EXIT_FAILURE in case of an error
- * @details global variables: program_name, TODO
+ * @details global variables: program_name, server, game, s1, s2, s3, s4, sem_client, sem_client2
 */
 int main(int argc, char ** argv) {
 	unsigned int power_of_two;
@@ -329,60 +245,52 @@ int main(int argc, char ** argv) {
 	(void) setup_signal_handler();
 	(void) init_shared_memory();
 	do{
-		DEBUG("PARENT IS WAITING FOR NEW CHILDS TO CONNECT\n");
+		DEBUG("PARENT IS WAITING FOR CHILDS TO CONNECT\n");
 		//fork program when the client unlocks the semaphore
-		if (P(sem_client) < 0) {
-			(void) bail_out(EXIT_FAILURE,"Semaphore P sem_client");
-		}
-		pid_t pid = fork();
-		//from here the program is seperated into two programms
+		MY_P(sem_client,"sem_client");
+		if(server->id == ID_UNSET){
+			pid_t pid = fork();
+			//from here the program is seperated into two programms
 
-		switch (pid) {
-		case -1:
-			(void) bail_out(EXIT_FAILURE,"can't fork");
-			break;
-		case 0:
-			/* start child */
-			srand(time(NULL));
-			if(server->id == 0){
+			switch (pid) {
+			case -1:
+				(void) bail_out(EXIT_FAILURE,"can't fork");
+				break;
+			case 0:
+				/* start child */
+				srand(time(NULL));
 				server->number_clients = server->number_clients + 1;
 				server->id = server->number_clients;
 				(void) init_shared_game(server->id);
-				new_number_field(game->field);
-			} else{
-				(void) init_shared_game(server->id);
-			}
-			
-			if (V(sem_client2) < 0) {
-		    	(void) bail_out(EXIT_FAILURE,"Semaphore V sem_client2");
-		 	}
+				
+				MY_V(sem_client2,"sem_client2");
 
-			DEBUG("Starting Loop\n");
-			do {
-				if (P(s1) < 0) {
-		         (void) bail_out(EXIT_FAILURE,"Semaphore P1");
-		     	}
+				DEBUG("Starting Loop\n");
+				do {
+					DEBUG("\tREADY\n");
+					MY_P(s1,"s1");
 					unsigned int cmd = game->command;
 					unsigned int status = move_numbers_field(game->field,cmd,power_of_two);
 					DEBUG("Got:\t%d\n", cmd);
-				if (V(s2) < 0) {
-		    		(void) bail_out(EXIT_FAILURE,"Semaphore V1");
-		 		}
-				if (P(s4) < 0) {
-		         (void) bail_out(EXIT_FAILURE,"Semaphore P4");
-		     	}
+					MY_V(s2,"s2");
 					game->status = status;
-					DEBUG("Writing to client %d: %d\n",server->id,game->status);
-				if (V(s3) < 0) {
-		    		(void) bail_out(EXIT_FAILURE,"Semaphore V3");
-		 		}
-			} while (1);
-			
-			(void) clean_close();
-			break;
-		default:
-			break;
+					MY_V(s3,"s3");
+					MY_P(s4,"s4");
+					if(status == ST_DELETE 
+						|| status == ST_WON 
+						|| status == ST_LOST){
+						(void) close_game();
+					}
+
+				} while (1);
+				break;
+			default:
+				//parent process
+				break;
+			}
+		} else{
+			DEBUG("CLIENT %d CONNECTED\n",server->id);
+			MY_V(sem_client2,"sem_client2");
 		}
 	} while(1);
-	(void) clean_close();
 }
