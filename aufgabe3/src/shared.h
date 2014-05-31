@@ -34,7 +34,7 @@
  * @def POWER_OF_TWO_LIMIT
  * @brief The limit of the power of two to win the game
  */
-#define POWER_OF_TWO_LIMIT 		(2)
+#define POWER_OF_TWO_LIMIT 		(3)
 /**
  * @def POWER_OF_TWO_MAX
  * @brief The maximum of the power of two to win the game 
@@ -187,6 +187,13 @@ void setup_signal_handler(void);
  * @param sig signal number catched
  */
 void signal_handler(int sig);
+
+/**
+ * @brief Gets the semaphors that should got initialized by the server
+ * @param key the id of the game
+ * @details s1,s2,s3,s4
+ */
+void grab_semaphors( key_t key );
 
 
 #endif /*ifndef dp_shared_h*/

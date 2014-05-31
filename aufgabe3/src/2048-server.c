@@ -47,7 +47,7 @@ static void init_shared_memory( void );
 
 /**
  * @brief initialize shared memory of new game, starts the game and initializes the semaphoes of it
- * @param key the key of the shared memory
+ * @param key the id of the game
  * @details shm_id_game, game
  */
 static void init_shared_game( key_t key );
@@ -72,6 +72,19 @@ static void parse_args(int argc, char **argv, unsigned int *power_of_two);
  * @details global variables: shm_id_game, s1, s2, s3, s4
  */
 static void close_game( void );
+
+/**
+ * @brief pauses the game and closes the child server the shared memory gets detached but not removed. The semaphores get removed carefully
+ * @details s1, s2, s3, s4, server
+ */
+static void pause_game (void);
+
+/**
+ * @brief reconnect to an existing shared memory game and create the semaphores for it
+ * @param key the id of the shared game
+ * @details shm_id_game, server
+ */
+static void reconnect_to_game (key_t key);
 
 
 /* === IMPLEMENTATIONS === */
@@ -231,6 +244,48 @@ static void close_game( void )
 
 }
 
+static void pause_game (void)
+{
+	DEBUG("Clean Pause of game %s\n",program_name);
+
+	if (semrm(s1) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 1 (semrm)");
+    }
+    if (semrm(s2) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 2 (semrm)");
+    }
+    if (semrm(s3) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 3 (semrm)");
+    }
+    if (semrm(s4) < 0) {
+        (void) bail_out(EXIT_FAILURE,"Error removing the semaphore 4 (semrm)");
+    }
+
+    	// Remove shm game
+	if (shmdt(server) < 0) {
+		(void) bail_out(EXIT_FAILURE,"Error detaching shared memory of server (shmdt)");
+	}
+
+	exit(EXIT_SUCCESS);
+}
+
+static void reconnect_to_game (key_t key)
+{
+	DEBUG("Reconnect to game %d \n",key);
+
+	shm_id_game = shmget(SHM_KEY+key, sizeof(struct shared_game), PERMISSION);
+	if (shm_id_game < 0) {
+		(void) bail_out(EXIT_FAILURE,"Could not access the shared memory! Is there a online server?");
+	}
+	game = shmat(shm_id_game, NULL, 0);
+	if (game == (struct shared_game *) -1) {
+		(void) bail_out(EXIT_FAILURE,"shmat failed (game)");
+	}
+
+	(void) init_semaphors(key);
+
+}
+
 /**
  * Program entry point
  * @brief Program entry point
@@ -241,6 +296,7 @@ static void close_game( void )
 */
 int main(int argc, char ** argv) {
 	unsigned int power_of_two;
+	bool running = true;
 	(void) parse_args(argc, argv, &power_of_two);
 	(void) setup_signal_handler();
 	(void) init_shared_memory();
@@ -248,10 +304,8 @@ int main(int argc, char ** argv) {
 		DEBUG("PARENT IS WAITING FOR CHILDS TO CONNECT\n");
 		//fork program when the client unlocks the semaphore
 		MY_P(sem_client,"sem_client");
-		if(server->id == ID_UNSET){
-			pid_t pid = fork();
-			//from here the program is seperated into two programms
-
+		pid_t pid = fork();
+		//from here the program is seperated into two programms
 			switch (pid) {
 			case -1:
 				(void) bail_out(EXIT_FAILURE,"can't fork");
@@ -259,10 +313,14 @@ int main(int argc, char ** argv) {
 			case 0:
 				/* start child */
 				srand(time(NULL));
-				server->number_clients = server->number_clients + 1;
-				server->id = server->number_clients;
-				(void) init_shared_game(server->id);
-				
+				if(server->id == ID_UNSET){
+					server->number_clients = server->number_clients + 1;
+					server->id = server->number_clients;
+					(void) init_shared_game(server->id);
+				} else{
+					(void) reconnect_to_game(server->id);
+				}
+					
 				MY_V(sem_client2,"sem_client2");
 
 				DEBUG("Starting Loop\n");
@@ -281,16 +339,17 @@ int main(int argc, char ** argv) {
 						|| status == ST_LOST){
 						(void) close_game();
 					}
+					if(status == ST_HALT)
+					{
 
-				} while (1);
+						(void) pause_game();
+					}
+
+				} while (running);
 				break;
 			default:
 				//parent process
 				break;
 			}
-		} else{
-			DEBUG("CLIENT %d CONNECTED\n",server->id);
-			MY_V(sem_client2,"sem_client2");
-		}
-	} while(1);
+	} while(running);
 }

@@ -6,7 +6,7 @@
 ###############################################################
 
 CC=gcc
-DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE -DENDEBUG 
+DEFS=-D_XOPEN_SOURCE=500 -D_BSD_SOURCE
 # use this flag to enable debug info -DENDEBUG
 CFLAGS=-Wall -g -std=c99 -pedantic $(DEFS)
 LDFLAGS=-lsem182

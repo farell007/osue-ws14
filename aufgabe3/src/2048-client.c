@@ -62,13 +62,6 @@ static void init_shared_game( key_t key );
 static void usage(void);
 
 /**
- * @brief Gets the semaphors that should got initialized by the server
- * @param key the id of the game
- * @details s1,s2,s3,s4
- */
-static void grab_semaphors( key_t key );
-
-/**
  * @brief Parse command line options
  * @param argc The argument counter
  * @param argv The argument vector
@@ -114,26 +107,6 @@ static void usage(void)
 	bail_out(EXIT_FAILURE, "USAGE: 2048-client [-n | -i <id>]\n"
 	"\t-n:\tStart a new game\n"
 	"\t-i:\tConnect to existing game with the given id\n");
-}
-
-static void grab_semaphors( key_t key )
-{
-	s1 = semgrab(SEM_KEY + 5*key + 1);
-	if (s1 < 0) {
-		(void) bail_out(EXIT_FAILURE,"semgrab (1) failed");
-	}
-	s2 = semgrab(SEM_KEY + 5*key + 2);
-	if (s2 < 0) {
-		(void) bail_out(EXIT_FAILURE,"semgrab (2) failed");
-	}
-	s3 = semgrab(SEM_KEY + 5*key + 3);
-	if (s3 < 0) {
-		(void) bail_out(EXIT_FAILURE,"semgrab (3) failed");
-	}
-	s4 = semgrab(SEM_KEY + 5*key + 4);
-	if (s4 < 0) {
-		(void) bail_out(EXIT_FAILURE,"semgrab (4) failed");
-	}
 }
 
 static void init_shared_game( key_t key )

@@ -184,3 +184,23 @@ void clean_close(void)
 
     exit(EXIT_SUCCESS);
 }
+
+void grab_semaphors( key_t key )
+{
+    s1 = semgrab(SEM_KEY + 5*key + 1);
+    if (s1 < 0) {
+        (void) bail_out(EXIT_FAILURE,"semgrab (1) failed");
+    }
+    s2 = semgrab(SEM_KEY + 5*key + 2);
+    if (s2 < 0) {
+        (void) bail_out(EXIT_FAILURE,"semgrab (2) failed");
+    }
+    s3 = semgrab(SEM_KEY + 5*key + 3);
+    if (s3 < 0) {
+        (void) bail_out(EXIT_FAILURE,"semgrab (3) failed");
+    }
+    s4 = semgrab(SEM_KEY + 5*key + 4);
+    if (s4 < 0) {
+        (void) bail_out(EXIT_FAILURE,"semgrab (4) failed");
+    }
+}
